@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/nav_gist_discover"
+        android:icon="@drawable/ic_menu_discover"
+        android:title="@string/title_nav_gist_discover" />
+    <item
+        android:id="@+id/nav_gist_star"
+        android:icon="@drawable/ic_menu_star"
+        android:title="@string/title_nav_gist_star" />
+    <item
+        android:id="@+id/nav_gist_your"
+        android:icon="@drawable/ic_menu_gists"
+        android:title="@string/title_nav_gist_your" />
+    <item
+        android:id="@+id/nav_profile"
+        android:icon="@drawable/ic_menu_profile"
+        android:title="@string/title_nav_profile" />
+
+</menu>

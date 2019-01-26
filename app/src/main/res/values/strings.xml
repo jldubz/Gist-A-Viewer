@@ -1,0 +1,52 @@
+<resources>
+    <string name="app_name">Gist\u003Ca\u003EViewer</string>
+    <string name="title_activity_main">Gist\u003Ca\u003EViewer</string>
+
+    <string name="item_gist_avatar_desc">Gist owner avatar</string>
+
+    <string name="title_nav_gist_discover">Discover</string>
+    <string name="title_nav_gist_star">Starred</string>
+    <string name="title_nav_gist_your">Your Gists</string>
+    <string name="title_nav_profile">Profile</string>
+
+    <string name="key_pref_file" translatable="false">com.jldubz.gistaviewer.preferences</string>
+    <string name="key_pref_username" translatable="false">com.jldubz.gistaviewer.preferences.username</string>
+    <string name="key_pref_token" translatable="false">com.jldubz.gistaviewer.preferences.token</string>
+
+    <string name="image_gists_empty_desc">Empty list image</string>
+    <string name="label_gists_empty1">We didn\'t find any gists</string>
+    <string name="label_gists_empty2">Check your internet connection and try again</string>
+
+    <string name="button_profile_login">Login to GitHub</string>
+    <string name="image_profile_avatar_desc">User avatar image</string>
+    <string name="label_profile_followers">Followers</string>
+    <string name="label_profile_following">Following</string>
+    <string name="label_profile_public_gists">Public Gists</string>
+    <string name="label_profile_private_gists">Private Gists</string>
+    <string name="label_profile_about">About</string>
+    <string name="label_profile_company">Company</string>
+    <string name="label_profile_location">Location</string>
+    <string name="label_profile_blog">Blog</string>
+    <string name="image_profile_login_desc">Gist A Viewer application icon</string>
+    <string name="input_profile_login_username_hint">GitHub Username</string>
+    <string name="input_profile_login_token_hint">Personal Access Token</string>
+    <string name="button_profile_login_what">What is my Personal Access Token?</string>
+
+    <string name="label_gist_author">Author</string>
+    <string name="label_gist_filecount">Files</string>
+    <string name="label_gist_createdat">Created On</string>
+    <string name="label_gist_lastupdated">Last Updated</string>
+    <string name="label_gist_comments">Comments</string>
+    <string name="input_gist_comment_hint">Write a comment</string>
+
+    <string name="text_profile_username_error">Please enter a valid username</string>
+    <string name="text_profile_token_error">Please enter a valid access token</string>
+
+    <string name="url_github_about_tokens" translatable="false">https://github.blog/2013-05-16-personal-api-tokens/</string>
+
+    <string name="dialog_title_error">Error</string>
+    <string name="dialog_button_ok">OK</string>
+    <string name="date_format">yyyy-MM-dd\'T\'HH:mm:ss.SSS</string>
+    <string name="title_gist_menu_star">Star</string>
+
+</resources>
