@@ -14,7 +14,8 @@
             android:name="com.jldubz.gistaviewer.ui.MainActivity"
             android:label="@string/title_activity_main"
             android:icon="@mipmap/ic_launcher"
-            android:launchMode="singleTop">
+            android:launchMode="singleTop"
+            android:theme="@style/AppTheme.Launcher">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
