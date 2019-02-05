@@ -18,13 +18,13 @@ import retrofit2.http.Query;
 
 public interface IGitHubService {
 
-    @GET("/gists/public?per_page=50")
+    @GET("/gists/public")
     Call<List<Gist>> getPublicGists(@Query("page") int pageNum);
 
-    @GET("/gists?per_page=50")
+    @GET("/gists")
     Call<List<Gist>> getYourGists(@Query("page") int pageNum);
 
-    @GET("/gists/starred?per_page=50")
+    @GET("/gists/starred")
     Call<List<Gist>> getStarredGists(@Query("page") int pageNum);
 
     @GET("/gists/{gistId}")
@@ -36,8 +36,12 @@ public interface IGitHubService {
     @GET("/gists/{gistId}/star")
     Call<ResponseBody> getGistStarById(@Path("gistId") String gistId);
 
+
+
     @GET("/user")
     Call<GitHubUser> getLoggedInUser();
+
+
 
     @PUT("/gists/{gistId}/star")
     Call<ResponseBody> starGistById(@Path("gistId") String gistId);
