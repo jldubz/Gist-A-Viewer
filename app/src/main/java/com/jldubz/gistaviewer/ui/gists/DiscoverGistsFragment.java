@@ -50,11 +50,11 @@ public class DiscoverGistsFragment extends Fragment implements GistAdapter.IGist
         mGistList = rootView.findViewById(R.id.list_gists);
         mGistList.setVisibility(View.GONE);
 
-        mAdapter.setFragment(this);
         FragmentActivity activity = getActivity();
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(activity, RecyclerView.VERTICAL, false);
         mGistList.setLayoutManager(linearLayoutManager);
         mGistList.addItemDecoration(new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL));
+        mAdapter.setIsLoadMoreEnabled(true);
         mGistList.setAdapter(mAdapter);
 
         mGistList.addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -62,7 +62,7 @@ public class DiscoverGistsFragment extends Fragment implements GistAdapter.IGist
             public void onScrolled(@NonNull RecyclerView recyclerView,
                                    int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
-                if (!mAdapter.canLoadMore()) {
+                if (!mAdapter.isLoadMoreEnabled()) {
                     return;
                 }
 
@@ -129,6 +129,7 @@ public class DiscoverGistsFragment extends Fragment implements GistAdapter.IGist
             mEmptyListView.setVisibility(View.GONE);
         }
         mProgressBar.setVisibility(View.GONE);
+        mAdapter.setIsLoadMoreEnabled(mViewModel.isMoreDiscoveredGistsAvailable());
         mAdapter.setGists(gists);
         mIsLoadingMore = false;
     }

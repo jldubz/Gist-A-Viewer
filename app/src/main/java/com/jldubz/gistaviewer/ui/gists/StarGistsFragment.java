@@ -51,7 +51,6 @@ public class StarGistsFragment extends Fragment implements GistAdapter.IGistList
         mGistList = rootView.findViewById(R.id.list_gists);
         mGistList.setVisibility(View.GONE);
 
-        mAdapter.setFragment(this);
         FragmentActivity activity = getActivity();
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(activity, RecyclerView.VERTICAL, false);
         mGistList.setLayoutManager(linearLayoutManager);
@@ -63,7 +62,7 @@ public class StarGistsFragment extends Fragment implements GistAdapter.IGistList
             public void onScrolled(@NonNull RecyclerView recyclerView,
                                    int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
-                if (!mAdapter.canLoadMore()) {
+                if (!mAdapter.isLoadMoreEnabled()) {
                     return;
                 }
 
@@ -142,6 +141,7 @@ public class StarGistsFragment extends Fragment implements GistAdapter.IGistList
             mGistList.setVisibility(View.VISIBLE);
             mEmptyListView.setVisibility(View.GONE);
         }
+        mAdapter.setIsLoadMoreEnabled(mViewModel.isMoreStarredGistsAvailable());
         mAdapter.setGists(gists);
         mProgressBar.setVisibility(View.GONE);
         mIsLoadingMore = false;

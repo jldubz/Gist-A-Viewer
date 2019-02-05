@@ -4,8 +4,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.RequestOptions;
 import com.jldubz.gistaviewer.R;
 import com.jldubz.gistaviewer.model.gists.Gist;
 
@@ -13,15 +11,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 
 public class GistAdapter extends RecyclerView.Adapter implements GistViewHolder.IGistViewHolderListener {
 
     private List<Gist> mGists;
-    private Fragment mFragment;
-
     private IGistListListener mListener;
+    private boolean mIsLoadMoreEnabled = false;
 
     @Override
     public int getItemViewType(int position) {
@@ -54,14 +50,6 @@ public class GistAdapter extends RecyclerView.Adapter implements GistViewHolder.
             Gist gist = mGists.get(position);
             GistViewHolder gistViewHolder = (GistViewHolder) holder;
             gistViewHolder.configureView(gist);
-            if (mFragment == null) {
-                return;
-            }
-            RequestOptions options = new RequestOptions().placeholder(R.drawable.ic_avatar_placeholder);
-            Glide.with(mFragment)
-                    .load(gist.getOwner().getAlternateImageUrl())
-                    .apply(options)
-                    .into(gistViewHolder.mAvatarImage);
         }
     }
 
@@ -72,17 +60,10 @@ public class GistAdapter extends RecyclerView.Adapter implements GistViewHolder.
         }
 
         int itemCount = mGists.size();
-        if (itemCount % 50 == 0) {
+        if (itemCount > 0 && mIsLoadMoreEnabled) {
             itemCount++;
         }
         return itemCount;
-    }
-
-    public boolean canLoadMore() {
-        if (mGists == null) {
-            return true;
-        }
-        return getItemCount() != mGists.size();
     }
 
     public void setGists(List<Gist> gists) {
@@ -103,12 +84,16 @@ public class GistAdapter extends RecyclerView.Adapter implements GistViewHolder.
         }
     }
 
-    void setFragment(Fragment fragment) {
-        mFragment = fragment;
-    }
-
     void setListener(IGistListListener mListener) {
         this.mListener = mListener;
+    }
+
+    boolean isLoadMoreEnabled() {
+        return mIsLoadMoreEnabled;
+    }
+
+    void setIsLoadMoreEnabled(boolean isLoadMoreEnabled) {
+        this.mIsLoadMoreEnabled = isLoadMoreEnabled;
     }
 
     @Override

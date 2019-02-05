@@ -55,6 +55,9 @@ public class MainViewModel extends ViewModel {
     private int mGistPagesLoaded;
     private String mUsername;
     private String mToken;
+    private boolean mMoreDiscoveredGistsAvailable = true;
+    private boolean mMoreYourGistsAvailable = true;
+    private boolean mMoreStarredGistsAvailable = true;
 
     public MainViewModel() {
         super();
@@ -196,16 +199,28 @@ public class MainViewModel extends ViewModel {
 
     public void discoverMoreGists() {
 
-        mGistPagesLoaded++;
-        Call<List<Gist>> gists = mGitHubService.getPublicGists(mGistPagesLoaded);
+        Call<List<Gist>> gists = mGitHubService.getPublicGists(mGistPagesLoaded+1);
         gists.enqueue(new Callback<List<Gist>>() {
             @Override
             public void onResponse(@NonNull Call<List<Gist>> call, @NonNull Response<List<Gist>> response) {
                 if (!response.isSuccessful()) {
                     onResponseError(response);
-                    mGistPagesLoaded--;
                     return;
                 }
+
+                //increment the number of pages loaded
+                mGistPagesLoaded++;
+                //check to see if there is a "next" page
+                String linkHeader = response.headers().get("Link");
+                if (linkHeader != null) {
+                    int nextLinkIndex = linkHeader.indexOf("; rel=\"next\"");
+                    mMoreDiscoveredGistsAvailable = nextLinkIndex >= 0;
+                }
+                else {
+                    mMoreDiscoveredGistsAvailable = false;
+                }
+
+                //update the list of discovered gists
                 List<Gist> currentList = mDiscoveredGists.getValue();
                 if (currentList == null) {
                     currentList = new ArrayList<>();
@@ -213,15 +228,11 @@ public class MainViewModel extends ViewModel {
                 if (response.body() != null) {
                     currentList.addAll(response.body());
                 }
-
                 mDiscoveredGists.postValue(currentList);
             }
 
             @Override
-            public void onFailure(Call<List<Gist>> call, Throwable t) {
-                //TODO PROBLEM OH NO
-                mGistPagesLoaded--;
-            }
+            public void onFailure(Call<List<Gist>> call, Throwable t) { }
         });
     }
 
@@ -231,6 +242,10 @@ public class MainViewModel extends ViewModel {
         }
 
         return mDiscoveredGists;
+    }
+
+    public boolean isMoreDiscoveredGistsAvailable() {
+        return mMoreDiscoveredGistsAvailable;
     }
 
     //endregion
@@ -243,13 +258,23 @@ public class MainViewModel extends ViewModel {
             return;
         }
 
-        mStarredGistsPagesLoaded++;
-        mGitHubService.getStarredGists(mStarredGistsPagesLoaded).enqueue(new Callback<List<Gist>>() {
+        mGitHubService.getStarredGists(mStarredGistsPagesLoaded+1).enqueue(new Callback<List<Gist>>() {
             @Override
             public void onResponse(Call<List<Gist>> call, Response<List<Gist>> response) {
                 if (!response.isSuccessful()) {
                     onResponseError(response);
                     return;
+                }
+
+                //increment the number of pages loaded
+                mStarredGistsPagesLoaded++;
+                String linkHeader = response.headers().get("Link");
+                if (linkHeader != null) {
+                    int nextLinkIndex = linkHeader.indexOf("; rel=\"next\"");
+                    mMoreStarredGistsAvailable = nextLinkIndex >= 0;
+                }
+                else {
+                    mMoreStarredGistsAvailable = false;
                 }
 
                 List<Gist> currentList = mStarredGists.getValue();
@@ -264,9 +289,7 @@ public class MainViewModel extends ViewModel {
             }
 
             @Override
-            public void onFailure(Call<List<Gist>> call, Throwable t) {
-
-            }
+            public void onFailure(Call<List<Gist>> call, Throwable t) { }
         });
     }
 
@@ -276,6 +299,10 @@ public class MainViewModel extends ViewModel {
         }
 
         return mStarredGists;
+    }
+
+    public boolean isMoreStarredGistsAvailable() {
+        return mMoreStarredGistsAvailable;
     }
 
     //endregion
@@ -288,13 +315,23 @@ public class MainViewModel extends ViewModel {
             return;
         }
 
-        mYourGistsPagesLoaded++;
-        mGitHubService.getYourGists(mYourGistsPagesLoaded).enqueue(new Callback<List<Gist>>() {
+        mGitHubService.getYourGists(mYourGistsPagesLoaded+1).enqueue(new Callback<List<Gist>>() {
             @Override
             public void onResponse(Call<List<Gist>> call, Response<List<Gist>> response) {
                 if (!response.isSuccessful()) {
                     onResponseError(response);
                     return;
+                }
+
+                mYourGistsPagesLoaded++;
+
+                String linkHeader = response.headers().get("Link");
+                if (linkHeader != null) {
+                    int nextLinkIndex = linkHeader.indexOf("; rel=\"next\"");
+                    mMoreYourGistsAvailable = nextLinkIndex >= 0;
+                }
+                else {
+                    mMoreYourGistsAvailable = false;
                 }
 
                 List<Gist> currentList = mYourGists.getValue();
@@ -309,9 +346,7 @@ public class MainViewModel extends ViewModel {
             }
 
             @Override
-            public void onFailure(Call<List<Gist>> call, Throwable t) {
-
-            }
+            public void onFailure(Call<List<Gist>> call, Throwable t) { }
         });
     }
 
@@ -321,6 +356,10 @@ public class MainViewModel extends ViewModel {
         }
 
         return mYourGists;
+    }
+
+    public boolean isMoreYourGistsAvailable() {
+        return mMoreYourGistsAvailable;
     }
 
     //endregion

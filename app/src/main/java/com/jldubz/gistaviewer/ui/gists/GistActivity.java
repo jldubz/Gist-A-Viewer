@@ -81,7 +81,6 @@ public class GistActivity extends AppCompatActivity {
         mCreatedAtText = findViewById(R.id.text_gist_created);
         mLastUpdatedText = findViewById(R.id.text_gist_updated);
         mCommentList = findViewById(R.id.list_gist_comments);
-        mCommentAdapter.setContext(this);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this, RecyclerView.VERTICAL, false);
         mCommentList.setLayoutManager(linearLayoutManager);
         mCommentList.setAdapter(mCommentAdapter);

@@ -1,12 +1,9 @@
 package com.jldubz.gistaviewer.ui.gists.comments;
 
-import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.RequestOptions;
 import com.jldubz.gistaviewer.R;
 import com.jldubz.gistaviewer.model.gists.GistComment;
 
@@ -19,7 +16,6 @@ import androidx.recyclerview.widget.RecyclerView;
 public class CommentAdapter extends RecyclerView.Adapter {
 
     private List<GistComment> mComments;
-    private Context mContext;
 
     @Override
     public int getItemViewType(int position) {
@@ -44,14 +40,6 @@ public class CommentAdapter extends RecyclerView.Adapter {
             GistComment gistComment = mComments.get(position);
             CommentViewHolder commentViewHolder = (CommentViewHolder) holder;
             commentViewHolder.configureView(gistComment);
-            if (mContext == null) {
-                return;
-            }
-            RequestOptions options = new RequestOptions().placeholder(R.drawable.ic_avatar_placeholder);
-            Glide.with(mContext)
-                    .load(gistComment.getUser().getAlternateImageUrl())
-                    .apply(options)
-                    .into(commentViewHolder.mAuthorAvatarImage);
         }
     }
 
@@ -73,9 +61,5 @@ public class CommentAdapter extends RecyclerView.Adapter {
         }
         mComments = new ArrayList<>(comments);
         notifyDataSetChanged();
-    }
-
-    public void setContext(Context content) {
-        mContext = content;
     }
 }

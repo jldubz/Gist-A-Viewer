@@ -4,6 +4,8 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.jldubz.gistaviewer.R;
 import com.jldubz.gistaviewer.model.gists.Gist;
 
@@ -38,6 +40,11 @@ class GistViewHolder extends RecyclerView.ViewHolder implements View.OnClickList
         mUsernameText.setText(gist.getOwner().getLogin());
         String updatedAtTime = DateFormat.getDateInstance().format(gist.getUpdatedAt());
         mUpdatedText.setText(updatedAtTime);
+        RequestOptions options = new RequestOptions().placeholder(R.drawable.ic_avatar_placeholder);
+        Glide.with(mAvatarImage)
+                .load(gist.getOwner().getAlternateImageUrl())
+                .apply(options)
+                .into(mAvatarImage);
     }
 
     @Override
