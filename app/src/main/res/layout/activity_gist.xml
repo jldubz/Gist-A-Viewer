@@ -10,11 +10,12 @@
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:fillViewport="true"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="wrap_content">
 
             <TextView
                 android:id="@+id/text_gist_filename"
@@ -325,9 +326,10 @@
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/list_gist_comments"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="0dp"
                 tools:listitem="@layout/item_comment"
                 tools:itemCount="5"
+                app:layout_constraintHeight_default="spread"
                 app:layout_constraintTop_toBottomOf="@id/view_gist_comments_create"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
