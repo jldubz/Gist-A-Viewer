@@ -44,6 +44,7 @@ public class GistViewModel extends ViewModel {
     private String mUsername;
     private String mToken;
     private String mGistId;
+    private int mGistCommentPrevPage;
 
     private IGitHubService mGitHubService;
 
@@ -144,7 +145,7 @@ public class GistViewModel extends ViewModel {
 
                 mGist.postValue(response.body());
 
-                loadComments();
+                loadCommentPageCount();
                 getGistStar();
             }
 
@@ -156,14 +157,60 @@ public class GistViewModel extends ViewModel {
 
     }
 
-    private void loadComments() {
-
+    private void loadCommentPageCount() {
         if (mGistId.isEmpty()) {
             return;
         }
 
         mCommentsProgressBarVisibility.postValue(View.VISIBLE);
-        mGitHubService.getGistCommentsById(mGistId).enqueue(new Callback<List<GistComment>>() {
+        mGitHubService.getGistCommentsHeaderById(mGistId).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (!response.isSuccessful()) {
+                    onResponseError(response);
+                    return;
+                }
+
+                //check to see if there is a "next" page
+                String linkHeader = response.headers().get("Link");
+                if (linkHeader != null) {
+                    int lastLinkIndex = linkHeader.indexOf("; rel=\"last\"");
+                    if (lastLinkIndex >= 0) {
+                        int lastPageNumberIndex = linkHeader.lastIndexOf("page=");
+                        String lastPageNum = linkHeader.substring(lastPageNumberIndex+5, linkHeader.indexOf(">", lastPageNumberIndex));
+                        mGistCommentPrevPage = Integer.parseInt(lastPageNum);
+                    }
+                    else {
+                        mGistCommentPrevPage = 0;
+                    }
+
+                }
+                else {
+                    mGistCommentPrevPage = 0;
+                }
+
+                loadMoreComments();
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                showError(t.getLocalizedMessage());
+            }
+        });
+    }
+
+    public void loadMoreComments() {
+
+        if (mGistId.isEmpty()) {
+            return;
+        }
+
+        if (mGistCommentPrevPage == 0){
+            return;
+        }
+
+        mCommentsProgressBarVisibility.postValue(View.VISIBLE);
+        mGitHubService.getGistCommentsById(mGistId, mGistCommentPrevPage).enqueue(new Callback<List<GistComment>>() {
             @Override
             public void onResponse(@NonNull Call<List<GistComment>> call, @NonNull Response<List<GistComment>> response) {
                 mCommentsProgressBarVisibility.postValue(View.GONE);
@@ -172,10 +219,20 @@ public class GistViewModel extends ViewModel {
                     return;
                 }
 
-                List<GistComment> comments = new ArrayList<>(response.body());
-                Collections.reverse(comments);
+                mGistCommentPrevPage--;
 
-                mComments.postValue(comments);
+                List<GistComment> currentList = mComments.getValue();
+                if (currentList == null) {
+                    currentList = new ArrayList<>();
+                }
+
+                if (response.body() != null) {
+                    List<GistComment> comments = new ArrayList<>(response.body());
+                    Collections.reverse(comments);
+                    currentList.addAll(comments);
+                }
+
+                mComments.postValue(currentList);
             }
 
             @Override
@@ -183,6 +240,10 @@ public class GistViewModel extends ViewModel {
                 showError(t.getLocalizedMessage());
             }
         });
+    }
+
+    public boolean isMoreCommentsAvailable() {
+        return mGistCommentPrevPage != 0;
     }
 
     public void createComment(String comment) {

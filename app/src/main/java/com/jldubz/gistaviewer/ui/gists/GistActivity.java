@@ -1,5 +1,6 @@
 package com.jldubz.gistaviewer.ui.gists;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -57,6 +58,8 @@ public class GistActivity extends AppCompatActivity {
 
     private CommentAdapter mCommentAdapter = new CommentAdapter();
 
+    private boolean mIsLoadingMoreComments = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -83,7 +86,31 @@ public class GistActivity extends AppCompatActivity {
         mCommentList = findViewById(R.id.list_gist_comments);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this, RecyclerView.VERTICAL, false);
         mCommentList.setLayoutManager(linearLayoutManager);
+        mCommentAdapter.setIsLoadMoreEnabled(false);
         mCommentList.setAdapter(mCommentAdapter);
+
+        mCommentList.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView,
+                                   int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                if (!mCommentAdapter.isLoadMoreEnabled()) {
+                    return;
+                }
+
+                int totalItemCount = linearLayoutManager.getItemCount();
+                if (totalItemCount <= 0) {
+                    return;
+                }
+                int lastVisibleItem = linearLayoutManager
+                        .findLastVisibleItemPosition();
+                if (!mIsLoadingMoreComments && lastVisibleItem >= totalItemCount - 1) {
+                    mIsLoadingMoreComments = true;
+                    mViewModel.loadMoreComments();
+                }
+            }
+        });
+
         mCreateCommentButton = findViewById(R.id.button_gist_comments_create);
         mCreateCommentButton.setOnClickListener(this::onCreateCommentButtonClick);
         mCommentInput = findViewById(R.id.input_gist_comment);
@@ -181,12 +208,14 @@ public class GistActivity extends AppCompatActivity {
     }
 
     private void onCommentsChanged(List<GistComment> comments) {
+        mIsLoadingMoreComments = false;
         if (comments.size() == 0) {
             mCommentList.setVisibility(View.GONE);
         } else {
             mCommentList.setVisibility(View.VISIBLE);
         }
         mProgressBar.setVisibility(View.GONE);
+        mCommentAdapter.setIsLoadMoreEnabled(mViewModel.isMoreCommentsAvailable());
         mCommentAdapter.setComments(comments);
     }
 

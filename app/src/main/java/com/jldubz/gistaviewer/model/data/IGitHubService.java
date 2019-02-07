@@ -11,6 +11,7 @@ import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.DELETE;
 import retrofit2.http.GET;
+import retrofit2.http.HEAD;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
 import retrofit2.http.Path;
@@ -30,8 +31,11 @@ public interface IGitHubService {
     @GET("/gists/{gistId}")
     Call<Gist> getGistById(@Path("gistId") String gistId);
 
+    @HEAD("/gists/{gistId}/comments")
+    Call<Void> getGistCommentsHeaderById(@Path("gistId") String gistId);
+
     @GET("/gists/{gistId}/comments")
-    Call<List<GistComment>> getGistCommentsById(@Path("gistId") String gistId);
+    Call<List<GistComment>> getGistCommentsById(@Path("gistId") String gistId, @Query("page") int pageNum);
 
     @GET("/gists/{gistId}/star")
     Call<ResponseBody> getGistStarById(@Path("gistId") String gistId);
