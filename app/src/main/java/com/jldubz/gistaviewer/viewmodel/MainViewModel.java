@@ -158,7 +158,7 @@ public class MainViewModel extends ViewModel {
 
             @Override
             public void onFailure(@NonNull Call<GitHubUser> call, @NonNull Throwable t) {
-
+                showError(t.getLocalizedMessage());
             }
         });
     }
@@ -232,7 +232,9 @@ public class MainViewModel extends ViewModel {
             }
 
             @Override
-            public void onFailure(Call<List<Gist>> call, Throwable t) { }
+            public void onFailure(Call<List<Gist>> call, Throwable t) {
+                showError(t.getLocalizedMessage());
+            }
         });
     }
 
@@ -289,7 +291,9 @@ public class MainViewModel extends ViewModel {
             }
 
             @Override
-            public void onFailure(Call<List<Gist>> call, Throwable t) { }
+            public void onFailure(Call<List<Gist>> call, Throwable t) {
+                showError(t.getLocalizedMessage());
+            }
         });
     }
 
@@ -346,7 +350,9 @@ public class MainViewModel extends ViewModel {
             }
 
             @Override
-            public void onFailure(Call<List<Gist>> call, Throwable t) { }
+            public void onFailure(Call<List<Gist>> call, Throwable t) {
+                showError(t.getLocalizedMessage());
+            }
         });
     }
 
