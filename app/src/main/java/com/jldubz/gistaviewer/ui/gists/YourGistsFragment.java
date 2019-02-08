@@ -73,7 +73,7 @@ public class YourGistsFragment extends Fragment implements GistAdapter.IGistList
                         .findLastVisibleItemPosition();
                 if (!mIsLoadingMore && lastVisibleItem >= totalItemCount - 1) {
                     mIsLoadingMore = true;
-                    mViewModel.loadMoreStarredGists();
+                    mViewModel.loadMoreYourGists();
                 }
             }
         });
