@@ -202,7 +202,7 @@ public class GistActivity extends AppCompatActivity {
         mLastUpdatedText.setText(updatedAtTime);
         RequestOptions options = new RequestOptions().placeholder(R.drawable.ic_avatar_placeholder);
         Glide.with(this)
-                .load(gist.getOwner().getAlternateImageUrl())
+                .load(gist.getOwner().getAvatarUrl())
                 .apply(options)
                 .into(mAuthorAvatarImage);
     }
