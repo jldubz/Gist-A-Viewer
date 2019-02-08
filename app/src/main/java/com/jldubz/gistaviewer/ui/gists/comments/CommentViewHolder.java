@@ -14,6 +14,11 @@ import java.text.DateFormat;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+/**
+ * Displays a GitHub Gist Comment in a RecyclerView
+ *
+ * @author Jon-Luke West
+ */
 class CommentViewHolder extends RecyclerView.ViewHolder {
 
     private ImageView mAuthorAvatarImage;
@@ -30,12 +35,20 @@ class CommentViewHolder extends RecyclerView.ViewHolder {
         mCommentText = itemView.findViewById(R.id.text_comment);
     }
 
+    /***
+     * Configure the view according to the Gist Comment info provided
+     * @param comment the Gist Comment info to display in this view
+     */
     void configureView(GistComment comment) {
 
+        //Set the author login name
         mAuthorNameText.setText(comment.getUser().getLogin());
+        //Set the created time
         String createdOnTime = DateFormat.getDateTimeInstance().format(comment.getCreatedAt());
         mCreatedText.setText(createdOnTime);
+        //Set the comment body
         mCommentText.setText(comment.getBody());
+        //Set the author avatar image
         RequestOptions options = new RequestOptions().placeholder(R.drawable.ic_avatar_placeholder);
         Glide.with(mAuthorAvatarImage)
                 .load(comment.getUser().getAvatarUrl())
