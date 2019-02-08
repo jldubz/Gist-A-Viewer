@@ -176,7 +176,4 @@ public class GitHubUser {
         this.privateGists = privateGists;
     }
 
-    public String getAlternateImageUrl() {
-        return "https://github.com/" + login + ".png";
-    }
 }

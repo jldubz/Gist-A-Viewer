@@ -38,7 +38,7 @@ class CommentViewHolder extends RecyclerView.ViewHolder {
         mCommentText.setText(comment.getBody());
         RequestOptions options = new RequestOptions().placeholder(R.drawable.ic_avatar_placeholder);
         Glide.with(mAuthorAvatarImage)
-                .load(comment.getUser().getAlternateImageUrl())
+                .load(comment.getUser().getAvatarUrl())
                 .apply(options)
                 .into(mAuthorAvatarImage);
     }

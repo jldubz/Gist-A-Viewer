@@ -217,7 +217,7 @@ public class ProfileFragment extends Fragment implements MainViewModel.IMainView
         mBlogText.setText(user.getBlog());
         RequestOptions options = new RequestOptions().placeholder(R.drawable.ic_avatar_placeholder);
         Glide.with(this)
-                .load(user.getAlternateImageUrl())
+                .load(user.getAvatarUrl())
                 .apply(options)
                 .into(mAvatarImage);
     }

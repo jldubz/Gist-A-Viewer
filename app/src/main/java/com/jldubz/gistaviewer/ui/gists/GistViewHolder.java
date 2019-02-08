@@ -42,7 +42,7 @@ class GistViewHolder extends RecyclerView.ViewHolder implements View.OnClickList
         mUpdatedText.setText(updatedAtTime);
         RequestOptions options = new RequestOptions().placeholder(R.drawable.ic_avatar_placeholder);
         Glide.with(mAvatarImage)
-                .load(gist.getOwner().getAlternateImageUrl())
+                .load(gist.getOwner().getAvatarUrl())
                 .apply(options)
                 .into(mAvatarImage);
     }
