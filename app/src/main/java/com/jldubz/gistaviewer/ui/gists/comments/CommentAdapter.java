@@ -14,6 +14,11 @@ import java.util.List;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+/**
+ * RecyclerView data adapter for displaying Gist Comments
+ *
+ * @author Jon-Luke West
+ */
 public class CommentAdapter extends RecyclerView.Adapter {
 
     private List<GistComment> mComments;
@@ -60,36 +65,55 @@ public class CommentAdapter extends RecyclerView.Adapter {
         }
 
         int itemCount = mComments.size();
+        //Add one to the item count if loading more is enabled and there is already data in the list
         if (itemCount > 0 && mIsLoadMoreEnabled) {
             itemCount++;
         }
         return itemCount;
     }
 
+    /***
+     * Update the data set driving this adapter
+     * @param comments the new list of comments to use
+     */
     public void setComments(List<GistComment> comments) {
+        //When the new list is NULL, use a blank list
         if (comments == null) {
             mComments = new ArrayList<>();
             notifyDataSetChanged();
             return;
         }
+        //Get the current size of the list
         int oldSize = mComments != null ? mComments.size() : 0;
+        //Get the size of the new list
         int newSize = comments.size();
+        //Update the comment list
         mComments = new ArrayList<>(comments);
         if (oldSize <= 0) {
+            //When the size of the old list was 0, refresh the whole list
             notifyDataSetChanged();
         }
-        else if (newSize == oldSize+1) {
-            notifyItemInserted(0);
-        }
         else if (newSize > oldSize) {
+            //When the size of the new list is greater than the old one, insert all new items
             notifyItemRangeInserted(oldSize, newSize - oldSize);
+        }
+        else {
+            notifyDataSetChanged();
         }
     }
 
+    /***
+     * Used to determine if loading more when the list is scrolled to the bottom is enabled
+     * @return TRUE if loading more is enabled, FALSE if not
+     */
     public boolean isLoadMoreEnabled() {
         return mIsLoadMoreEnabled;
     }
 
+    /***
+     * Set whether loading more when the list is scrolled to the bottom is enabled or not
+     * @param isLoadMoreEnabled TRUE if loading more is enabled, FALSE if not
+     */
     public void setIsLoadMoreEnabled(boolean isLoadMoreEnabled) {
         this.mIsLoadMoreEnabled = isLoadMoreEnabled;
     }
