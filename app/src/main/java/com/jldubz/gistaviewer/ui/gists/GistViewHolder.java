@@ -14,11 +14,16 @@ import java.text.DateFormat;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+/**
+ * Displays a GitHub Gist in a RecyclerView that handles clicks
+ *
+ * @author Jon-Luke West
+ */
 class GistViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
     private TextView mFileNameText;
     private TextView mUsernameText;
-    ImageView mAvatarImage;
+    private ImageView mAvatarImage;
     private TextView mUpdatedText;
 
     private IGistViewHolderListener mListener;
@@ -35,11 +40,19 @@ class GistViewHolder extends RecyclerView.ViewHolder implements View.OnClickList
         itemView.setOnClickListener(this);
     }
 
+    /***
+     * Configure the view according to the Gist info provided
+     * @param gist the Gist info to display in this view
+     */
     void configureView(Gist gist) {
+        //Set the filename to the first file in the Gist
         mFileNameText.setText(gist.getFirstFile().getFilename());
+        //Set the author login name
         mUsernameText.setText(gist.getOwner().getLogin());
+        //Set the updated time
         String updatedAtTime = DateFormat.getDateInstance().format(gist.getUpdatedAt());
         mUpdatedText.setText(updatedAtTime);
+        //Set the author avatar image
         RequestOptions options = new RequestOptions().placeholder(R.drawable.ic_avatar_placeholder);
         Glide.with(mAvatarImage)
                 .load(gist.getOwner().getAvatarUrl())
@@ -53,11 +66,16 @@ class GistViewHolder extends RecyclerView.ViewHolder implements View.OnClickList
             return;
         }
 
+        //Tell the listener that the gist was clicked
         mListener.onGistClicked(getAdapterPosition());
     }
 
     interface IGistViewHolderListener {
 
+        /***
+         * Called when a Gist is clicked
+         * @param position the position of the Gist item that was clicked
+         */
         void onGistClicked(int position);
     }
 }

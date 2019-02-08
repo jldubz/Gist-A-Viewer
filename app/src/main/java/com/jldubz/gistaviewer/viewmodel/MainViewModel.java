@@ -31,8 +31,6 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainViewModel extends ViewModel {
 
-    private boolean mIsLoggedIn;
-
     private MutableLiveData<GitHubUser> mUser = new MutableLiveData<>();
     private MutableLiveData<List<Gist>> mStarredGists = new MutableLiveData<>();
     private MutableLiveData<List<Gist>> mYourGists = new MutableLiveData<>();
@@ -47,24 +45,31 @@ public class MainViewModel extends ViewModel {
     private MutableLiveData<String> mUsernameError = new MutableLiveData<>();
     private MutableLiveData<String> mTokenError = new MutableLiveData<>();
 
-    private IGitHubService mGitHubService;
     private IMainViewModelListener mListener;
 
-    private int mStarredGistsPagesLoaded;
-    private int mYourGistsPagesLoaded;
-    private int mGistPagesLoaded;
     private String mUsername;
     private String mToken;
+    private int mStarredGistsPagesLoaded;
+    private int mYourGistsPagesLoaded;
+    private int mGistPagesLoaded = 0;
     private boolean mMoreDiscoveredGistsAvailable = true;
     private boolean mMoreYourGistsAvailable = true;
     private boolean mMoreStarredGistsAvailable = true;
+    private boolean mIsLoggedIn;
+
+    private IGitHubService mGitHubService;
 
     public MainViewModel() {
         super();
+        init();
         initAnonService();
     }
 
-    private void initAnonService() {
+    /***
+     * Clean and initialize the state of the view and all related counters and flags
+     */
+    private void init() {
+
         mLoginViewVisibility.setValue(View.VISIBLE);
         mLoginFormVisibility.setValue(View.VISIBLE);
         mProfileVisibility.setValue(View.GONE);
@@ -80,6 +85,12 @@ public class MainViewModel extends ViewModel {
         mIsLoggedIn = false;
         mStarredGistsPagesLoaded = 0;
         mYourGistsPagesLoaded = 0;
+    }
+
+    /***
+     *
+     */
+    private void initAnonService() {
 
         Gson gson = new GsonBuilder()
                 .setDateFormat(R.string.date_format)
@@ -94,23 +105,39 @@ public class MainViewModel extends ViewModel {
 
     //region Profile
 
+    /***
+     * Attempt to login to GitHub using the provided username and token
+     * @param username the GitHub username to authenticate as
+     * @param token a private access token associated with the provided GitHub username
+     */
     public void logIn(String username, String token) {
 
+        //Clear the error state of the username and token fields
         mUsernameError.postValue(null);
         mTokenError.postValue(null);
+        //Hide the login form
         mLoginFormVisibility.postValue(View.GONE);
+        //Show the progress bar
         mProgressBarVisibility.postValue(View.VISIBLE);
 
+        //Check to see if the username field is empty
         if (username.trim().isEmpty()) {
+            //Hide the progress bar
             mProgressBarVisibility.postValue(View.GONE);
+            //Show the login form
             mLoginFormVisibility.postValue(View.VISIBLE);
+            //Set the error on the username field
             mUsernameError.postValue(Constants.USERNAME_ERROR);
             return;
         }
 
+        //Check to see if the token field is empty
         if (token.trim().isEmpty()) {
+            //Hide the progress bar
             mProgressBarVisibility.postValue(View.GONE);
+            //Show the login form
             mLoginFormVisibility.postValue(View.VISIBLE);
+            //Set the error on the token field
             mTokenError.postValue(Constants.TOKEN_ERROR);
             return;
         }
@@ -163,7 +190,11 @@ public class MainViewModel extends ViewModel {
         });
     }
 
+    /***
+     * Logout of GitHub and reset the API service to anonymous access
+     */
     public void logout() {
+        init();
         initAnonService();
     }
 
@@ -255,10 +286,10 @@ public class MainViewModel extends ViewModel {
     //region Starred Gists
 
     public void loadMoreStarredGists() {
-        if (!mIsLoggedIn) {
+        /*if (!mIsLoggedIn) {
             showError(Constants.NEED_LOGIN_ERROR);
             return;
-        }
+        }*/
 
         mGitHubService.getStarredGists(mStarredGistsPagesLoaded+1).enqueue(new Callback<List<Gist>>() {
             @Override
@@ -440,6 +471,8 @@ public class MainViewModel extends ViewModel {
     private void showError(String message) {
         mErrorMessage.postValue(message);
     }
+
+
 
     public interface IMainViewModelListener {
 
