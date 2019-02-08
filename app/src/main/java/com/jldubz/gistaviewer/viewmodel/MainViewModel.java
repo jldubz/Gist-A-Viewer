@@ -29,6 +29,12 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
+/**
+ * ViewModel that handles business logic for Gist fragments DiscoverGistsFragment, StarGistsFragment, and YourGistsFragment and
+ * the ProfileFragment
+ *
+ * @author Jon-Luke West
+ */
 public class MainViewModel extends ViewModel {
 
     private MutableLiveData<GitHubUser> mUser = new MutableLiveData<>();
@@ -88,7 +94,7 @@ public class MainViewModel extends ViewModel {
     }
 
     /***
-     *
+     * Configure a new Retrofit instance for future API calls with no authorization
      */
     private void initAnonService() {
 
@@ -162,22 +168,13 @@ public class MainViewModel extends ViewModel {
             public void onResponse(@NonNull Call<GitHubUser> call, @NonNull Response<GitHubUser> response) {
                 if (!response.isSuccessful()) {
                     onResponseError(response);
-                    mProfileVisibility.postValue(View.GONE);
-                    mLoginFormVisibility.postValue(View.VISIBLE);
-                    mLoginViewVisibility.postValue(View.VISIBLE);
-                    mProgressBarVisibility.postValue(View.GONE);
+                    showLoginForm();
                     return;
                 }
 
-                mProfileVisibility.postValue(View.VISIBLE);
-                mLoginViewVisibility.postValue(View.GONE);
                 mUser.postValue(response.body());
-                mIsLoggedIn = true;
-                mUsername = username.trim();
-                mToken = token.trim();
-                if (mListener != null) {
-                    mListener.saveCredentials(mUsername, mToken);
-                }
+                showProfile();
+                saveCredentials(username, token);
 
                 loadMoreYourGists();
                 loadMoreStarredGists();
@@ -228,6 +225,9 @@ public class MainViewModel extends ViewModel {
 
     //region Discover Gists
 
+    /**
+     * Download public Gists that have been recently created or updated on GitHub
+     */
     public void discoverMoreGists() {
 
         Call<List<Gist>> gists = mGitHubService.getPublicGists(mGistPagesLoaded+1);
@@ -243,13 +243,7 @@ public class MainViewModel extends ViewModel {
                 mGistPagesLoaded++;
                 //check to see if there is a "next" page
                 String linkHeader = response.headers().get("Link");
-                if (linkHeader != null) {
-                    int nextLinkIndex = linkHeader.indexOf("; rel=\"next\"");
-                    mMoreDiscoveredGistsAvailable = nextLinkIndex >= 0;
-                }
-                else {
-                    mMoreDiscoveredGistsAvailable = false;
-                }
+                mMoreDiscoveredGistsAvailable = isNextLinkAvailable(linkHeader);
 
                 //update the list of discovered gists
                 List<Gist> currentList = mDiscoveredGists.getValue();
@@ -285,11 +279,10 @@ public class MainViewModel extends ViewModel {
 
     //region Starred Gists
 
+    /**
+     * Download Gists starred by the authorized user GitHub
+     */
     public void loadMoreStarredGists() {
-        /*if (!mIsLoggedIn) {
-            showError(Constants.NEED_LOGIN_ERROR);
-            return;
-        }*/
 
         mGitHubService.getStarredGists(mStarredGistsPagesLoaded+1).enqueue(new Callback<List<Gist>>() {
             @Override
@@ -301,15 +294,10 @@ public class MainViewModel extends ViewModel {
 
                 //increment the number of pages loaded
                 mStarredGistsPagesLoaded++;
+                //check to see if there is a "next" page
                 String linkHeader = response.headers().get("Link");
-                if (linkHeader != null) {
-                    int nextLinkIndex = linkHeader.indexOf("; rel=\"next\"");
-                    mMoreStarredGistsAvailable = nextLinkIndex >= 0;
-                }
-                else {
-                    mMoreStarredGistsAvailable = false;
-                }
-
+                mMoreStarredGistsAvailable = isNextLinkAvailable(linkHeader);
+                //update the list of starred Gists
                 List<Gist> currentList = mStarredGists.getValue();
                 if (currentList == null) {
                     currentList = new ArrayList<>();
@@ -344,7 +332,11 @@ public class MainViewModel extends ViewModel {
 
     //region Your Gists
 
+    /**
+     * Download Gists published by the authorized user GitHub
+     */
     public void loadMoreYourGists() {
+        //Make sure there is an authorized user; otherwise this call returns the same thing as discoverMoreGists();
         if (!mIsLoggedIn) {
             showError(Constants.NEED_LOGIN_ERROR);
             return;
@@ -358,17 +350,12 @@ public class MainViewModel extends ViewModel {
                     return;
                 }
 
+                //increment the number of pages loaded
                 mYourGistsPagesLoaded++;
-
+                //check to see if there is a "next" page
                 String linkHeader = response.headers().get("Link");
-                if (linkHeader != null) {
-                    int nextLinkIndex = linkHeader.indexOf("; rel=\"next\"");
-                    mMoreYourGistsAvailable = nextLinkIndex >= 0;
-                }
-                else {
-                    mMoreYourGistsAvailable = false;
-                }
-
+                mMoreYourGistsAvailable = isNextLinkAvailable(linkHeader);
+                //update the list of your Gists
                 List<Gist> currentList = mYourGists.getValue();
                 if (currentList == null) {
                     currentList = new ArrayList<>();
@@ -406,10 +393,20 @@ public class MainViewModel extends ViewModel {
         return mErrorMessage;
     }
 
+    /**
+     * Set or clear the interface listening to calls to save credentials
+     * @param mListener the interface listening or NULL to clear it
+     */
     public void setListener(IMainViewModelListener mListener) {
         this.mListener = mListener;
     }
 
+    /**
+     * Check the HTTP code returned from a Retrofit Call to display the right error message to the user
+     * @param response the Retrofit Response to process
+     *
+     * @see Response
+     */
     private void onResponseError(Response response) {
 
         if (response.code() == 400) {
@@ -468,14 +465,73 @@ public class MainViewModel extends ViewModel {
         }
     }
 
+    /**
+     * Check a link header returned in a call to the GitHub API to see if there is a URL pointing to the next page of content
+     * @param linkHeader the Link header returned by the call to the GitHub API
+     * @return TRUE is a next link was found, FALSE if not
+     */
+    private boolean isNextLinkAvailable(String linkHeader) {
+        if (linkHeader == null) {
+            return false;
+        }
+
+        int nextLinkIndex = linkHeader.indexOf("; rel=\"next\"");
+        return nextLinkIndex >= 0;
+
+    }
+
+    /**
+     * Convenience method for showing an error to the user
+     * @param message the message to show to the user
+     */
     private void showError(String message) {
         mErrorMessage.postValue(message);
     }
 
+    /**
+     * Show the views for logging in and hide the profile views
+     */
+    private void showLoginForm() {
+        mProfileVisibility.postValue(View.GONE);
+        mLoginFormVisibility.postValue(View.VISIBLE);
+        mLoginViewVisibility.postValue(View.VISIBLE);
+        mProgressBarVisibility.postValue(View.GONE);
+    }
 
+    /**
+     * Show the profile views and hide the login views
+     */
+    private void showProfile() {
+        mProfileVisibility.postValue(View.VISIBLE);
+        mLoginViewVisibility.postValue(View.GONE);
+        mProgressBarVisibility.postValue(View.GONE);
+    }
+
+    /**
+     * Trim and save credentials so that the login persists after the app closes
+     *
+     * This assumes that there is an IMainViewModelListener configured
+     *
+     * @param username the username to save
+     * @param token the private access token to save
+     */
+    private void saveCredentials(String username, String token) {
+        mIsLoggedIn = true;
+        //trim white space
+        mUsername = username.trim();
+        mToken = token.trim();
+        if (mListener != null) {
+            mListener.saveCredentials(mUsername, mToken);
+        }
+    }
 
     public interface IMainViewModelListener {
 
+        /**
+         * Called when credentials need to be saved to Shared Preferences
+         * @param username the username to save
+         * @param token the private access token to save
+         */
         void saveCredentials(String username, String token);
     }
 }
