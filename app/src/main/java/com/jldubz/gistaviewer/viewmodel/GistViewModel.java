@@ -32,6 +32,12 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
+/**
+ * ViewModel that handles business logic for a GistActivity
+ *
+ * @author Jon-Luke West
+ * @see com.jldubz.gistaviewer.ui.gists.GistActivity
+ */
 public class GistViewModel extends ViewModel {
 
     private MutableLiveData<Gist> mGist;
@@ -50,23 +56,36 @@ public class GistViewModel extends ViewModel {
 
     public GistViewModel() {
         super();
+        init();
         initAnonService();
     }
 
-    private void initAnonService() {
+    /***
+     * Clean and initialize the state of the view and all related counters and flags
+     */
+    private void init() {
+
         mProgressBarVisibility.setValue(View.GONE);
         mCommentsProgressBarVisibility.setValue(View.GONE);
         mErrorMessage.setValue(null);
         mIsGistStarred.setValue(false);
-        mGist = null;
         mComments = new MutableLiveData<>();
+        mGist = null;
         mUsername = null;
         mToken = null;
+    }
 
+    /***
+     * Configure a new Retrofit instance for future API calls with no authorization
+     */
+    private void initAnonService() {
+
+        //Create a Gson instance with the right date format
         Gson gson = new GsonBuilder()
                 .setDateFormat(R.string.date_format)
                 .create();
 
+        //Create an instance of the GitHub service interface using Retrofit
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(Constants.URL_GITHUB)
                 .addConverterFactory(GsonConverterFactory.create(gson))
@@ -74,27 +93,34 @@ public class GistViewModel extends ViewModel {
         mGitHubService = retrofit.create(IGitHubService.class);
     }
 
-    public void setGistId(String mGistId) {
-        this.mGistId = mGistId;
-    }
-
+    /**
+     * Set the credentials to use for authorization when communicating with the GitHub API for
+     *  this Gist.  The Retrofit service instance will be rebuild using these credentials.
+     * @param username the GitHub username used for authorization
+     * @param token the private access token associated with the GitHub user
+     */
     public void setCredentials(String username, String token) {
 
+        //Check if the provided credentials are empty
         if (username.isEmpty() || token.isEmpty()) {
             return;
         }
 
+        //Store the username and token for later
         mUsername = username;
         mToken = token;
 
+        //Build an authorized client
         OkHttpClient client = new OkHttpClient.Builder()
                 .addInterceptor(new BasicAuthInterceptor(mUsername, mToken))
                 .build();
 
+        //Create a Gson instance with the right date format
         Gson gson = new GsonBuilder()
                 .setDateFormat(R.string.date_format)
                 .create();
 
+        //Create an instance of the GitHub service interface using Retrofit
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(Constants.URL_GITHUB)
                 .addConverterFactory(GsonConverterFactory.create(gson))
@@ -102,17 +128,6 @@ public class GistViewModel extends ViewModel {
                 .build();
         mGitHubService = retrofit.create(IGitHubService.class);
     }
-
-    public LiveData<Gist> getGist() {
-        if (mGist == null) {
-            mGist = new MutableLiveData<>();
-            loadGist();
-        }
-
-        return mGist;
-    }
-
-    public LiveData<List<GistComment>> getComments() { return mComments; }
 
     public LiveData<Integer> getProgressBarVisibility() {
         return mProgressBarVisibility;
@@ -122,21 +137,49 @@ public class GistViewModel extends ViewModel {
         return mErrorMessage;
     }
 
-    public LiveData<Boolean> getStarredState() {
-        return mIsGistStarred;
+    //region Gist
+
+    /**
+     * Set the ID of the Gist to use
+     * @param mGistId the ID of the Gist
+     */
+    public void setGistId(String mGistId) {
+        this.mGistId = mGistId;
     }
 
+    /**
+     * Get an observable instance of the Gist.  This will also load the Gist from the API
+     *  if one has not been loaded yet.
+     * @return an observable Gist
+     * @see LiveData
+     */
+    public LiveData<Gist> getGist() {
+        if (mGist == null) {
+            mGist = new MutableLiveData<>();
+            loadGist();
+        }
+
+        return mGist;
+    }
+
+    /**
+     * Download a Gist from the GitHub API
+     */
     private void loadGist() {
 
+        //Make sure that a Gist ID was stored for use
         if (mGistId.isEmpty()) {
             showError(Constants.INVALID_GIST_ID_ERROR);
             return;
         }
 
+        //Show the progress bar
         mProgressBarVisibility.postValue(View.VISIBLE);
+        //Download the Gist
         mGitHubService.getGistById(mGistId).enqueue(new Callback<Gist>() {
             @Override
             public void onResponse(@NonNull Call<Gist> call, @NonNull Response<Gist> response) {
+                //Hide the progress bar
                 mProgressBarVisibility.postValue(View.GONE);
                 if (!response.isSuccessful()) {
                     onResponseError(response);
@@ -157,58 +200,189 @@ public class GistViewModel extends ViewModel {
 
     }
 
-    private void loadCommentPageCount() {
+    //endregion
+
+    //region Star
+
+    public LiveData<Boolean> getStarredState() {
+        return mIsGistStarred;
+    }
+
+    /**
+     * Called to indicate that the user has clicked the star on the Gist in an attempt to either
+     *  add or remove it from their list of starred Gists.
+     */
+    public void starItemClicked() {
+        //Make sure that the state of the star has been initialized
+        if (mIsGistStarred == null) {
+            showError("There was a problem reading the current state of this Gist's star.  Please try again.");
+            return;
+        }
+
+        //Perform the appropriate action based on the state of the star
+        if (mIsGistStarred.getValue()) {
+            unStarGist();
+        }
+        else {
+            starGist();
+        }
+    }
+
+    /**
+     * Get the current state of the Gist's star from the GitHub API
+     */
+    private void getGistStar() {
+
+        //Make sure there is a Gist ID stored for use
         if (mGistId.isEmpty()) {
             return;
         }
 
-        mCommentsProgressBarVisibility.postValue(View.VISIBLE);
-        mGitHubService.getGistCommentsHeaderById(mGistId).enqueue(new Callback<Void>() {
+        mGitHubService.getGistStarById(mGistId).enqueue(new Callback<ResponseBody>() {
             @Override
-            public void onResponse(Call<Void> call, Response<Void> response) {
-                if (!response.isSuccessful()) {
-                    onResponseError(response);
+            public void onResponse(@NonNull Call call, @NonNull Response response) {
+                //HTTP 404 -> there is no star on this Gist
+                if (response.code() == 404) {
+                    mIsGistStarred.postValue(false);
+                    return;
+                }
+                //HTTP 204 -> there is a star on this Gist
+                if (response.code() == 204) {
+                    mIsGistStarred.postValue(true);
                     return;
                 }
 
-                //check to see if there is a "next" page
-                String linkHeader = response.headers().get("Link");
-                if (linkHeader != null) {
-                    int lastLinkIndex = linkHeader.indexOf("; rel=\"last\"");
-                    if (lastLinkIndex >= 0) {
-                        int lastPageNumberIndex = linkHeader.lastIndexOf("page=");
-                        String lastPageNum = linkHeader.substring(lastPageNumberIndex+5, linkHeader.indexOf(">", lastPageNumberIndex));
-                        mGistCommentPrevPage = Integer.parseInt(lastPageNum);
-                    }
-                    else {
-                        mGistCommentPrevPage = 0;
-                    }
-
+                //Process any other response codes
+                if (!response.isSuccessful()) {
+                    onResponseError(response);
                 }
-                else {
-                    mGistCommentPrevPage = 0;
-                }
-
-                loadMoreComments();
             }
 
             @Override
-            public void onFailure(Call<Void> call, Throwable t) {
+            public void onFailure(@NonNull Call call, @NonNull Throwable t) {
                 showError(t.getLocalizedMessage());
             }
         });
     }
 
-    public void loadMoreComments() {
+    /**
+     * Add a star to the Gist so that it shows up in the authorized user's list
+     *  of starred Gists.
+     */
+    private void starGist() {
 
+        //Make sure there is a Gist ID stored for use
         if (mGistId.isEmpty()) {
             return;
         }
 
+        //Build a client with an authorization and a zero content-length header
+        OkHttpClient client = new OkHttpClient.Builder()
+                .addInterceptor(new ZeroContentLengthInterceptor())
+                .addInterceptor(new BasicAuthInterceptor(mUsername, mToken))
+                .build();
+
+        //Create an instance of the GitHub service interface using Retrofit
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(Constants.URL_GITHUB)
+                .addConverterFactory(GsonConverterFactory.create())
+                .client(client)
+                .build();
+
+        IGitHubService gitHubService = retrofit.create(IGitHubService.class);
+
+        gitHubService.starGistById(mGistId).enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> response) {
+                //HTTP 204 -> success, there is now a star
+                if (response.code() == 204) {
+                    mIsGistStarred.postValue(true);
+                    return;
+                }
+
+                //Process other response codes
+                if (!response.isSuccessful()) {
+                    onResponseError(response);
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ResponseBody> call, @NonNull Throwable t) {
+                showError(t.getLocalizedMessage());
+            }
+        });
+    }
+
+    /**
+     * Remove a star from the Gist so that it no longer shows up in the authorized user's list
+     *  of starred Gists.
+     */
+    private void unStarGist() {
+
+        //Make sure there is a Gist ID stored for use
+        if (mGistId.isEmpty()) {
+            return;
+        }
+
+        //Build a client with an authorization and a zero content-length header
+        OkHttpClient client = new OkHttpClient.Builder()
+                .addInterceptor(new ZeroContentLengthInterceptor())
+                .addInterceptor(new BasicAuthInterceptor(mUsername, mToken))
+                .build();
+
+        //Create an instance of the GitHub service interface using Retrofit
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(Constants.URL_GITHUB)
+                .addConverterFactory(GsonConverterFactory.create())
+                .client(client)
+                .build();
+
+        IGitHubService gitHubService = retrofit.create(IGitHubService.class);
+
+        gitHubService.unstarGistById(mGistId).enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> response) {
+                //HTTP 204 -> success, there is no longer a star
+                if (response.code() == 204) {
+                    mIsGistStarred.postValue(false);
+                    return;
+                }
+
+                //Process other response codes
+                if (!response.isSuccessful()) {
+                    onResponseError(response);
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ResponseBody> call, @NonNull Throwable t) {
+                showError(t.getLocalizedMessage());
+            }
+        });
+    }
+
+    //endregion
+
+    //region Comments
+
+    public LiveData<List<GistComment>> getComments() { return mComments; }
+
+    /**
+     * Download comments for the gist from the GitHub API
+     */
+    public void loadMoreComments() {
+
+        //Make sure there is a Gist ID stored for use
+        if (mGistId.isEmpty()) {
+            return;
+        }
+
+        //Make sure that there are more comments to load (last -> first)
         if (mGistCommentPrevPage == 0){
             return;
         }
 
+        //Show the progress bar in the comments section
         mCommentsProgressBarVisibility.postValue(View.VISIBLE);
         mGitHubService.getGistCommentsById(mGistId, mGistCommentPrevPage).enqueue(new Callback<List<GistComment>>() {
             @Override
@@ -219,8 +393,10 @@ public class GistViewModel extends ViewModel {
                     return;
                 }
 
+                //Decrement the page counter
                 mGistCommentPrevPage--;
 
+                //Update the list of comments, reversing them so that the newest are at the top
                 List<GistComment> currentList = mComments.getValue();
                 if (currentList == null) {
                     currentList = new ArrayList<>();
@@ -242,16 +418,27 @@ public class GistViewModel extends ViewModel {
         });
     }
 
+    /**
+     * Determine if there are more pages that can be loaded for comments
+     * @return TRUE if more pages can be loaded, FALSE if not
+     */
     public boolean isMoreCommentsAvailable() {
         return mGistCommentPrevPage != 0;
     }
 
+    /**
+     * Add a comment to the Gist as the authorized user.  The API will error if there is no
+     *  authorized user
+     * @param comment the comment to post
+     */
     public void createComment(String comment) {
 
+        //Make sure there is a Gist ID stored for use
         if (mGistId.isEmpty()) {
             return;
         }
 
+        //Make sure the submitted comment isn't empty
         if (comment.trim().isEmpty()) {
             showError("You cannot create a blank comment");
             return;
@@ -265,6 +452,7 @@ public class GistViewModel extends ViewModel {
                     return;
                 }
 
+                //Add the comment to the top of the list
                 List<GistComment> comments = new ArrayList<>(mComments.getValue());
                 comments.add(0, response.body());
                 mComments.postValue(comments);
@@ -278,127 +466,65 @@ public class GistViewModel extends ViewModel {
 
     }
 
-    private void getGistStar() {
-
+    /**
+     * Download the headers for the comment API call to determine how many pages there are to load.
+     *  Comments cannot be loaded until this is executed first.
+     */
+    private void loadCommentPageCount() {
+        //Make sure there is a Gist ID stored for use
         if (mGistId.isEmpty()) {
             return;
         }
 
-        mGitHubService.getGistStarById(mGistId).enqueue(new Callback<ResponseBody>() {
+        //Show the progress bar in the comments section
+        mCommentsProgressBarVisibility.postValue(View.VISIBLE);
+        mGitHubService.getGistCommentsHeaderById(mGistId).enqueue(new Callback<Void>() {
             @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) {
-                if (response.code() == 404) {
-                    mIsGistStarred.postValue(false);
-                    return;
-                }
-                if (response.code() == 204) {
-                    mIsGistStarred.postValue(true);
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (!response.isSuccessful()) {
+                    onResponseError(response);
                     return;
                 }
 
-                if (!response.isSuccessful()) {
-                    onResponseError(response);
+                //check to see if there are Link headers
+                String linkHeader = response.headers().get("Link");
+                if (linkHeader != null) {
+                    //check to see if there is a "last" page
+                    int lastLinkIndex = linkHeader.indexOf("; rel=\"last\"");
+                    if (lastLinkIndex >= 0) {
+                        //grab the page number for the "last" link
+                        int lastPageNumberIndex = linkHeader.lastIndexOf("page=");
+                        String lastPageNum = linkHeader.substring(lastPageNumberIndex+5, linkHeader.indexOf(">", lastPageNumberIndex));
+                        mGistCommentPrevPage = Integer.parseInt(lastPageNum);
+                    }
+                    else {
+                        mGistCommentPrevPage = 0;
+                    }
+
                 }
+                else {
+                    mGistCommentPrevPage = 0;
+                }
+
+                //Try to load the comments
+                loadMoreComments();
             }
 
             @Override
-            public void onFailure(@NonNull Call call, @NonNull Throwable t) {
+            public void onFailure(Call<Void> call, Throwable t) {
                 showError(t.getLocalizedMessage());
             }
         });
     }
 
-    public void starItemClicked() {
-        if (mIsGistStarred == null) {
-            return;
-        }
+    //endregion
 
-        if (mIsGistStarred.getValue()) {
-            unStarGist();
-        }
-        else {
-            starGist();
-        }
-    }
-
-    private void starGist() {
-
-        if (mGistId.isEmpty()) {
-            return;
-        }
-
-        OkHttpClient client = new OkHttpClient.Builder()
-                .addInterceptor(new ZeroContentLengthInterceptor())
-                .addInterceptor(new BasicAuthInterceptor(mUsername, mToken))
-                .build();
-
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(Constants.URL_GITHUB)
-                .addConverterFactory(GsonConverterFactory.create())
-                .client(client)
-                .build();
-
-        IGitHubService gitHubService = retrofit.create(IGitHubService.class);
-
-        gitHubService.starGistById(mGistId).enqueue(new Callback<ResponseBody>() {
-            @Override
-            public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> response) {
-                if (response.code() == 204) {
-                    mIsGistStarred.postValue(true);
-                    return;
-                }
-
-                if (!response.isSuccessful()) {
-                    onResponseError(response);
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<ResponseBody> call, @NonNull Throwable t) {
-                showError(t.getLocalizedMessage());
-            }
-        });
-    }
-
-    private void unStarGist() {
-
-        if (mGistId.isEmpty()) {
-            return;
-        }
-
-        OkHttpClient client = new OkHttpClient.Builder()
-                .addInterceptor(new ZeroContentLengthInterceptor())
-                .addInterceptor(new BasicAuthInterceptor(mUsername, mToken))
-                .build();
-
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(Constants.URL_GITHUB)
-                .addConverterFactory(GsonConverterFactory.create())
-                .client(client)
-                .build();
-
-        IGitHubService gitHubService = retrofit.create(IGitHubService.class);
-
-        gitHubService.unstarGistById(mGistId).enqueue(new Callback<ResponseBody>() {
-            @Override
-            public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> response) {
-                if (response.code() == 204) {
-                    mIsGistStarred.postValue(false);
-                    return;
-                }
-
-                if (!response.isSuccessful()) {
-                    onResponseError(response);
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<ResponseBody> call, @NonNull Throwable t) {
-                showError(t.getLocalizedMessage());
-            }
-        });
-    }
-
+    /**
+     * Check the HTTP code returned from a Retrofit Call to display the right error message to the user
+     *
+     * @param response the Retrofit Response to process
+     * @see Response
+     */
     private void onResponseError(Response response) {
 
         if (response.code() == 400) {
@@ -457,6 +583,11 @@ public class GistViewModel extends ViewModel {
         }
     }
 
+    /**
+     * Convenience method for showing an error to the user
+     *
+     * @param message the message to show to the user
+     */
     private void showError(String message) {
         mProgressBarVisibility.postValue(View.GONE);
         mErrorMessage.postValue(message);
