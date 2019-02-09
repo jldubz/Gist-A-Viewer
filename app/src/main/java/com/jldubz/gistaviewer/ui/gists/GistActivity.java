@@ -1,5 +1,6 @@
 package com.jldubz.gistaviewer.ui.gists;
 
+import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
@@ -37,6 +38,12 @@ import com.jldubz.gistaviewer.viewmodel.GistViewModel;
 import java.text.DateFormat;
 import java.util.List;
 
+/**
+ * Activity for viewing a GitHub Gist and any comments posted to it
+ *
+ * @author Jon-Luke West
+ */
+@Keep
 public class GistActivity extends AppCompatActivity {
 
     public static String KEY_GIST_ID = "com.jldubz.gistaviewer.ui.gists.GistActivity.gistId";
@@ -89,6 +96,8 @@ public class GistActivity extends AppCompatActivity {
         mCommentAdapter.setIsLoadMoreEnabled(false);
         mCommentList.setAdapter(mCommentAdapter);
 
+        //Add a scroll listener to trigger a call to load more when the user reaches the bottom
+        // of the comments list
         mCommentList.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView,
@@ -114,6 +123,8 @@ public class GistActivity extends AppCompatActivity {
         mCreateCommentButton = findViewById(R.id.button_gist_comments_create);
         mCreateCommentButton.setOnClickListener(this::onCreateCommentButtonClick);
         mCommentInput = findViewById(R.id.input_gist_comment);
+        //Add a listener to the comment input field so that the button to create the comment
+        // is only enabled when there is text in the field
         mCommentInput.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) { }
@@ -135,7 +146,7 @@ public class GistActivity extends AppCompatActivity {
         if (sourceIntent == null) {
             return;
         }
-
+        //Get the gist ID attached to the Intent
         String gistId = sourceIntent.getStringExtra(KEY_GIST_ID);
         if (gistId.isEmpty()) {
             onErrorChanged(Constants.INVALID_GIST_ID_ERROR);
@@ -176,55 +187,14 @@ public class GistActivity extends AppCompatActivity {
         }
     }
 
-    private void observeViewModel() {
-        mViewModel.getErrorMessage().observe(this, this::onErrorChanged);
-        mViewModel.getGist().observe(this, this::onGistChanged);
-        mViewModel.getComments().observe(this, this::onCommentsChanged);
-        mViewModel.getProgressBarVisibility().observe(this, this::onProgressBarVisibilityChanged);
-    }
-
-    private void onErrorChanged(String message) {
-        if (message == null) {
-            return;
-        }
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Error").setMessage(message).setPositiveButton("OK", null).show();
-    }
-
-    private void onGistChanged(Gist gist) {
-        mFirstFilenameText.setText(gist.getFirstFile().getFilename());
-        mDescriptionText.setText(gist.getDescription());
-        mFileCountText.setText(String.valueOf(gist.getFiles().size()));
-        mAuthorNameText.setText(gist.getOwner().getLogin());
-        String updatedAtTime = DateFormat.getDateTimeInstance().format(gist.getUpdatedAt());
-        String createdAtTime = DateFormat.getDateTimeInstance().format(gist.getCreatedAt());
-        mCreatedAtText.setText(createdAtTime);
-        mLastUpdatedText.setText(updatedAtTime);
-        RequestOptions options = new RequestOptions().placeholder(R.drawable.ic_avatar_placeholder);
-        Glide.with(this)
-                .load(gist.getOwner().getAvatarUrl())
-                .apply(options)
-                .into(mAuthorAvatarImage);
-    }
-
-    private void onCommentsChanged(List<GistComment> comments) {
-        mIsLoadingMoreComments = false;
-        if (comments.size() == 0) {
-            mCommentList.setVisibility(View.GONE);
-        } else {
-            mCommentList.setVisibility(View.VISIBLE);
-        }
-        mProgressBar.setVisibility(View.GONE);
-        mCommentAdapter.setIsLoadMoreEnabled(mViewModel.isMoreCommentsAvailable());
-        mCommentAdapter.setComments(comments);
-    }
-
-    private void onProgressBarVisibilityChanged(Integer visibility) {
-        mProgressBar.setVisibility(visibility);
-    }
-
+    /**
+     * Called when the user clicks the button to create a new comment
+     * @param view the View that was clicked
+     */
     private void onCreateCommentButtonClick(View view) {
+        //Clear any field errors
         mCommentInput.setError(null);
+        //Make sure text was submitted and the field isn't blank
         Editable comment = mCommentInput.getText();
         if (comment == null) {
             mCommentInput.setError("You cannot create a blank comment");
@@ -239,16 +209,90 @@ public class GistActivity extends AppCompatActivity {
         }
         imm.hideSoftInputFromWindow(currentFocus.getWindowToken(), 0);
 
+        //Clear the field
         mCommentInput.setText("");
 
+        //Try to create the comment
         mViewModel.createComment(comment.toString());
     }
 
+    /**
+     * Observe all of the necessary properties of the view model
+     */
+    private void observeViewModel() {
+        mViewModel.getErrorMessage().observe(this, this::onErrorChanged);
+        mViewModel.getGist().observe(this, this::onGistChanged);
+        mViewModel.getComments().observe(this, this::onCommentsChanged);
+        mViewModel.getProgressBarVisibility().observe(this, this::onProgressBarVisibilityChanged);
+    }
+
+    /**
+     * Called when the Gist data was updated to update the UI
+     * @param gist the new Gist data
+     */
+    private void onGistChanged(Gist gist) {
+        //Set the name of the first file in the Gist
+        mFirstFilenameText.setText(gist.getFirstFile().getFilename());
+        //Set the description of the Gist
+        mDescriptionText.setText(gist.getDescription());
+        //Set the number of files in the Gist
+        mFileCountText.setText(String.valueOf(gist.getFiles().size()));
+        //Set the login name of the author of the Gist
+        mAuthorNameText.setText(gist.getOwner().getLogin());
+        //Set the last updated and created time/dates
+        String updatedAtTime = DateFormat.getDateTimeInstance().format(gist.getUpdatedAt());
+        String createdAtTime = DateFormat.getDateTimeInstance().format(gist.getCreatedAt());
+        mCreatedAtText.setText(createdAtTime);
+        mLastUpdatedText.setText(updatedAtTime);
+        //Set the author's avatar image
+        RequestOptions options = new RequestOptions().placeholder(R.drawable.ic_avatar_placeholder);
+        Glide.with(this)
+                .load(gist.getOwner().getAvatarUrl())
+                .apply(options)
+                .into(mAuthorAvatarImage);
+    }
+
+    /**
+     * Called when the list of Comments has been updated to update the UI
+     * @param comments the new list of comments
+     */
+    private void onCommentsChanged(List<GistComment> comments) {
+        mIsLoadingMoreComments = false;
+        if (comments.size() == 0) {
+            mCommentList.setVisibility(View.GONE);
+        } else {
+            mCommentList.setVisibility(View.VISIBLE);
+        }
+        mProgressBar.setVisibility(View.GONE);
+        mCommentAdapter.setIsLoadMoreEnabled(mViewModel.isMoreCommentsAvailable());
+        mCommentAdapter.setComments(comments);
+    }
+
+    /**
+     * Called when the state of the star on the Gist has been updated to update the UI
+     * @param isStarred TRUE if the star should be filled, FALSE if it should be an outline
+     */
     private void onStarStateChanged(Boolean isStarred) {
         if (isStarred) {
             mStarMenuItem.setIcon(R.drawable.ic_star_filled);
         } else {
             mStarMenuItem.setIcon(R.drawable.ic_star_outline);
         }
+    }
+
+    private void onProgressBarVisibilityChanged(Integer visibility) {
+        mProgressBar.setVisibility(visibility);
+    }
+
+    /**
+     * Called when a new error message is needs to be displayed to the user
+     * @param message the error message to diaplsy
+     */
+    private void onErrorChanged(String message) {
+        if (message == null) {
+            return;
+        }
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Error").setMessage(message).setPositiveButton("OK", null).show();
     }
 }
