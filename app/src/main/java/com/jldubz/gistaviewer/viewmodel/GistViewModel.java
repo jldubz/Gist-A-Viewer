@@ -489,25 +489,7 @@ public class GistViewModel extends ViewModel {
                 //check to see if there are Link headers
                 String linkHeader = response.headers().get("Link");
                 if (linkHeader != null) {
-                    //check to see if there is a "last" page
-                    int lastLinkIndex = linkHeader.indexOf("; rel=\"last\"");
-                    if (lastLinkIndex >= 0) {
-                        //grab the page number for the "last" link
-                        int lastPageNumberIndex = linkHeader.lastIndexOf("page=");
-                        String lastPageNum = linkHeader.substring(lastPageNumberIndex+5, linkHeader.indexOf(">", lastPageNumberIndex));
-                        try {
-                            mGistCommentPrevPage = Integer.parseInt(lastPageNum);
-                        }
-                        catch (NumberFormatException exception) {
-                            showError("Couldn't load comments.  Please try again.");
-                            mGistCommentPrevPage = 0;
-                        }
-
-                    }
-                    else {
-                        mGistCommentPrevPage = 0;
-                    }
-
+                    mGistCommentPrevPage = getLastPageNum(linkHeader);
                 }
                 else {
                     mGistCommentPrevPage = 0;
@@ -525,6 +507,34 @@ public class GistViewModel extends ViewModel {
     }
 
     //endregion
+
+    /**
+     * Check a link header returned in a call to the GitHub API to see if there is a URL pointing to the last page of content
+     *  and then get the number of pages from it
+     *
+     * @param linkHeader the Link header returned by the call to the GitHub API
+     * @return the number of pages in the list of data
+     */
+    private int getLastPageNum(String linkHeader) {
+        //check to see if there is a "last" page
+        int lastLinkIndex = linkHeader.indexOf("; rel=\"last\"");
+        if (lastLinkIndex >= 0) {
+            //grab the page number for the "last" link
+            int lastPageNumberIndex = linkHeader.lastIndexOf("page=");
+            String lastPageNum = linkHeader.substring(lastPageNumberIndex+5, linkHeader.indexOf(">", lastPageNumberIndex));
+            try {
+                return Integer.parseInt(lastPageNum);
+            }
+            catch (NumberFormatException exception) {
+                showError("Couldn't load comments.  Please try again.");
+                return 0;
+            }
+
+        }
+        else {
+            return 0;
+        }
+    }
 
     /**
      * Check the HTTP code returned from a Retrofit Call to display the right error message to the user
