@@ -25,6 +25,10 @@ import com.jldubz.gistaviewer.viewmodel.MainViewModel;
 
 import java.util.List;
 
+/**
+ * Fragment used to display a list of Gists that have been published by the app's authorized user
+ *  on GitHub
+ */
 public class YourGistsFragment extends Fragment implements GistAdapter.IGistListListener {
 
     private MainViewModel mViewModel;
@@ -49,6 +53,7 @@ public class YourGistsFragment extends Fragment implements GistAdapter.IGistList
         mEmptyListView = rootView.findViewById(R.id.view_gists_empty);
         mProgressBar = rootView.findViewById(R.id.progress_gists);
         mGistList = rootView.findViewById(R.id.list_gists);
+        mGistList.setVisibility(View.GONE);
 
         FragmentActivity activity = getActivity();
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(activity, RecyclerView.VERTICAL, false);
@@ -56,19 +61,24 @@ public class YourGistsFragment extends Fragment implements GistAdapter.IGistList
         mGistList.addItemDecoration(new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL));
         mGistList.setAdapter(mAdapter);
 
+        //Add a scroll listener to trigger a call to load more when the user reaches the bottom
+        // of the list
         mGistList.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView,
                                    int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
+                //Prevent any calls to update when the list has it disabled
                 if (!mAdapter.isLoadMoreEnabled()) {
                     return;
                 }
 
+                //Prevent any calls to update if the list is empty
                 int totalItemCount = linearLayoutManager.getItemCount();
                 if (totalItemCount <= 0) {
                     return;
                 }
+                //Check to see if the last visible item is the last item in the list
                 int lastVisibleItem = linearLayoutManager
                         .findLastVisibleItemPosition();
                 if (!mIsLoadingMore && lastVisibleItem >= totalItemCount - 1) {
@@ -112,24 +122,18 @@ public class YourGistsFragment extends Fragment implements GistAdapter.IGistList
         startActivity(gistIntent);
     }
 
+    /**
+     * Observe all of the necessary properties of the view model
+     */
     private void observeViewModel() {
         mViewModel.getErrorMessage().observe(this, this::onErrorChanged);
         mViewModel.getYourGists().observe(this, this::onYourGistsChanged);
     }
 
-    private void onErrorChanged(String message) {
-        if (message == null) {
-            return;
-        }
-        mProgressBar.setVisibility(View.GONE);
-        if (mAdapter.getItemCount() == 0) {
-            mEmptyListView.setVisibility(View.VISIBLE);
-            mGistList.setVisibility(View.GONE);
-        }
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setTitle("Error").setMessage(message).setPositiveButton("OK", null).show();
-    }
-
+    /**
+     * Called when the list of Gists has updated and the UI needs to be updated to reflect it
+     * @param gists the new list of Gists
+     */
     private void onYourGistsChanged(List<Gist> gists) {
         if (gists == null || gists.size() == 0) {
             mEmptyListView.setVisibility(View.VISIBLE);
@@ -142,5 +146,22 @@ public class YourGistsFragment extends Fragment implements GistAdapter.IGistList
         mAdapter.setGists(gists);
         mProgressBar.setVisibility(View.GONE);
         mIsLoadingMore = false;
+    }
+
+    /**
+     * Called when a new error message is needs to be displayed to the user
+     * @param message the error message to diaplsy
+     */
+    private void onErrorChanged(String message) {
+        if (message == null) {
+            return;
+        }
+        mProgressBar.setVisibility(View.GONE);
+        if (mAdapter.getItemCount() == 0) {
+            mEmptyListView.setVisibility(View.VISIBLE);
+            mGistList.setVisibility(View.GONE);
+        }
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle("Error").setMessage(message).setPositiveButton("OK", null).show();
     }
 }

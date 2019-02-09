@@ -25,6 +25,10 @@ import com.jldubz.gistaviewer.viewmodel.MainViewModel;
 
 import java.util.List;
 
+/**
+ * Fragment used to display a list of Gists that have been starred by the app's authorized user
+ *  on GitHub
+ */
 public class StarGistsFragment extends Fragment implements GistAdapter.IGistListListener {
 
     private MainViewModel mViewModel;
@@ -57,19 +61,24 @@ public class StarGistsFragment extends Fragment implements GistAdapter.IGistList
         mGistList.addItemDecoration(new DividerItemDecoration(activity, DividerItemDecoration.VERTICAL));
         mGistList.setAdapter(mAdapter);
 
+        //Add a scroll listener to trigger a call to load more when the user reaches the bottom
+        // of the list
         mGistList.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView,
                                    int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
+                //Prevent any calls to update when the list has it disabled
                 if (!mAdapter.isLoadMoreEnabled()) {
                     return;
                 }
 
+                //Prevent any calls to update if the list is empty
                 int totalItemCount = linearLayoutManager.getItemCount();
                 if (totalItemCount <= 0) {
                     return;
                 }
+                //Check to see if the last visible item is the last item in the list
                 int lastVisibleItem = linearLayoutManager
                         .findLastVisibleItemPosition();
                 if (!mIsLoadingMore && lastVisibleItem >= totalItemCount - 1) {
@@ -113,12 +122,36 @@ public class StarGistsFragment extends Fragment implements GistAdapter.IGistList
         startActivity(gistIntent);
     }
 
+    /**
+     * Observe all of the necessary properties of the view model
+     */
     private void observeViewModel() {
-
         mViewModel.getErrorMessage().observe(this, this::onErrorChanged);
         mViewModel.getStarredGists().observe(this, this::onStarredGistsChanged);
     }
 
+    /**
+     * Called when the list of Gists has updated and the UI needs to be updated to reflect it
+     * @param gists the new list of Gists
+     */
+    private void onStarredGistsChanged(List<Gist> gists) {
+        if (gists == null || gists.size() == 0) {
+            mEmptyListView.setVisibility(View.VISIBLE);
+            mGistList.setVisibility(View.GONE);
+        } else {
+            mGistList.setVisibility(View.VISIBLE);
+            mEmptyListView.setVisibility(View.GONE);
+        }
+        mAdapter.setIsLoadMoreEnabled(mViewModel.isMoreStarredGistsAvailable());
+        mAdapter.setGists(gists);
+        mProgressBar.setVisibility(View.GONE);
+        mIsLoadingMore = false;
+    }
+
+    /**
+     * Called when a new error message is needs to be displayed to the user
+     * @param message the error message to diaplsy
+     */
     private void onErrorChanged(String message) {
         if (message == null) {
             return;
@@ -130,20 +163,5 @@ public class StarGistsFragment extends Fragment implements GistAdapter.IGistList
         }
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle("Error").setMessage(message).setPositiveButton("OK", null).show();
-    }
-
-    private void onStarredGistsChanged(List<Gist> gists) {
-        if (gists == null || gists.size() == 0) {
-            mAdapter.setGists(gists);
-            mEmptyListView.setVisibility(View.VISIBLE);
-            mGistList.setVisibility(View.GONE);
-        } else {
-            mGistList.setVisibility(View.VISIBLE);
-            mEmptyListView.setVisibility(View.GONE);
-        }
-        mAdapter.setIsLoadMoreEnabled(mViewModel.isMoreStarredGistsAvailable());
-        mAdapter.setGists(gists);
-        mProgressBar.setVisibility(View.GONE);
-        mIsLoadingMore = false;
     }
 }

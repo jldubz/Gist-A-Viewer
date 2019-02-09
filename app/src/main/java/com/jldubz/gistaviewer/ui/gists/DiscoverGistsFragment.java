@@ -25,6 +25,10 @@ import com.jldubz.gistaviewer.viewmodel.MainViewModel;
 
 import java.util.List;
 
+/**
+ * Fragment used to display a list of public Gists that have been recently created or updated
+ *  on GitHub
+ */
 public class DiscoverGistsFragment extends Fragment implements GistAdapter.IGistListListener {
 
     private MainViewModel mViewModel;
@@ -57,19 +61,24 @@ public class DiscoverGistsFragment extends Fragment implements GistAdapter.IGist
         mAdapter.setIsLoadMoreEnabled(true);
         mGistList.setAdapter(mAdapter);
 
+        //Add a scroll listener to trigger a call to load more when the user reaches the bottom
+        // of the list
         mGistList.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView,
                                    int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
+                //Prevent any calls to update when the list has it disabled
                 if (!mAdapter.isLoadMoreEnabled()) {
                     return;
                 }
 
+                //Prevent any calls to update if the list is empty
                 int totalItemCount = linearLayoutManager.getItemCount();
                 if (totalItemCount <= 0) {
                     return;
                 }
+                //Check to see if the last visible item is the last item in the list
                 int lastVisibleItem = linearLayoutManager
                         .findLastVisibleItemPosition();
                 if (!mIsLoadingMore && lastVisibleItem >= totalItemCount - 1) {
@@ -113,12 +122,19 @@ public class DiscoverGistsFragment extends Fragment implements GistAdapter.IGist
         startActivity(gistIntent);
     }
 
+    /**
+     * Observe all of the necessary properties of the view model
+     */
     private void observeViewModel() {
         mIsLoadingMore = true;
         mViewModel.getDiscoveredGists().observe(this, this::onGistsChanged);
         mViewModel.getErrorMessage().observe(this, this::onErrorChanged);
     }
 
+    /**
+     * Called when the list of Gists has updated and the UI needs to be updated to reflect it
+     * @param gists the new list of Gists
+     */
     private void onGistsChanged(List<Gist> gists) {
         if (gists.size() == 0) {
             mEmptyListView.setVisibility(View.VISIBLE);
@@ -134,6 +150,10 @@ public class DiscoverGistsFragment extends Fragment implements GistAdapter.IGist
         mIsLoadingMore = false;
     }
 
+    /**
+     * Called when a new error message is needs to be displayed to the user
+     * @param message the error message to diaplsy
+     */
     private void onErrorChanged(String message) {
         if (message == null) {
             return;
