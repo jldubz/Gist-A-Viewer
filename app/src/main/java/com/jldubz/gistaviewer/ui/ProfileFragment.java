@@ -33,6 +33,11 @@ import com.jldubz.gistaviewer.model.GitHubUser;
 
 import static android.content.Context.MODE_PRIVATE;
 
+/**
+ * Fragment used for showing a GitHub user and some of their basic info
+ *
+ * @author Jon-Luke West
+ */
 public class ProfileFragment extends Fragment implements MainViewModel.IMainViewModelListener {
 
     private MainViewModel mViewModel;
@@ -133,6 +138,9 @@ public class ProfileFragment extends Fragment implements MainViewModel.IMainView
         editor.apply();
     }
 
+    /**
+     * Called when the Login button was clicked by the user
+     */
     private void onLoginButtonClick() {
 
         //Validate the input
@@ -161,6 +169,9 @@ public class ProfileFragment extends Fragment implements MainViewModel.IMainView
         imm.hideSoftInputFromWindow(currentFocus.getWindowToken(), 0);
     }
 
+    /**
+     * Called when the Logout button was clicked by the user
+     */
     private void onLogoutButtonClick() {
         mViewModel.logout();
         //Clear input fields
@@ -179,6 +190,9 @@ public class ProfileFragment extends Fragment implements MainViewModel.IMainView
         editor.apply();
     }
 
+    /**
+     * Called when the user clicks the "What is my private access token?" button
+     */
     private void onWhatTokenButtonClick() {
 
         //Open related web post
@@ -187,6 +201,9 @@ public class ProfileFragment extends Fragment implements MainViewModel.IMainView
         startActivity(i);
     }
 
+    /**
+     * Observe all of the necessary properties of the view model
+     */
     private void observeViewModel() {
         mViewModel.setListener(this);
         mViewModel.getLoginFormVisibility().observe(this, visibility -> mLoginFormView.setVisibility(visibility));
@@ -199,22 +216,38 @@ public class ProfileFragment extends Fragment implements MainViewModel.IMainView
         mViewModel.getUser().observe(this, this::onUserLoaded);
     }
 
+    /**
+     * Called when the user has been updated
+     * @param user the new GitHub User data
+     */
     private void onUserLoaded(GitHubUser user) {
 
+        //Make sure we got a user
         if (user == null) {
             return;
         }
 
+        //Set the login name
         mUsernameText.setText(user.getLogin());
+        //Set the name
         mNameText.setText(user.getName());
+        //Set the number of followers
         mFollowersCountText.setText(String.valueOf(user.getFollowers()));
+        //Set the number of users this user is following
         mFollowingCountText.setText(String.valueOf(user.getFollowing()));
+        //Set the number of public Gists published by this user
         mPublicGistsCountText.setText(String.valueOf(user.getPublicGists()));
+        //Set the number of private Gists published by this user
         mPrivateGistsCountText.setText(String.valueOf(user.getPrivateGists()));
+        //Set the bio text
         mBioText.setText(user.getBio());
+        //Set the company
         mCompanyText.setText(user.getCompany());
+        //Set the location
         mLocationText.setText(user.getLocation());
+        //Set the blog link
         mBlogText.setText(user.getBlog());
+        //Set the user's avatar image
         RequestOptions options = new RequestOptions().placeholder(R.drawable.ic_avatar_placeholder);
         Glide.with(this)
                 .load(user.getAvatarUrl())
@@ -222,6 +255,10 @@ public class ProfileFragment extends Fragment implements MainViewModel.IMainView
                 .into(mAvatarImage);
     }
 
+    /**
+     * Called when a new error message is needs to be displayed to the user
+     * @param message the error message to diaplsy
+     */
     private void onErrorChanged(String message) {
         if (message == null) {
             return;
