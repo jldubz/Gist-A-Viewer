@@ -76,10 +76,7 @@ public class MainViewModel extends ViewModel {
      */
     private void init() {
 
-        mLoginViewVisibility.setValue(View.VISIBLE);
-        mLoginFormVisibility.setValue(View.VISIBLE);
-        mProfileVisibility.setValue(View.GONE);
-        mProgressBarVisibility.setValue(View.GONE);
+        showLoginForm();
         mErrorMessage.setValue(null);
         mUsernameError.setValue(null);
         mTokenError.setValue(null);
@@ -98,10 +95,12 @@ public class MainViewModel extends ViewModel {
      */
     private void initAnonService() {
 
+        //Create a Gson instance with the right date format
         Gson gson = new GsonBuilder()
                 .setDateFormat(R.string.date_format)
                 .create();
 
+        //Create an instance of the GitHub service interface using Retrofit
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(Constants.URL_GITHUB)
                 .addConverterFactory(GsonConverterFactory.create(gson))
@@ -195,7 +194,9 @@ public class MainViewModel extends ViewModel {
         initAnonService();
     }
 
-    public LiveData<GitHubUser> getUser() { return mUser; }
+    public LiveData<GitHubUser> getUser() {
+        return mUser;
+    }
 
     public LiveData<Integer> getLoginViewVisibility() {
         return mLoginViewVisibility;
@@ -230,7 +231,7 @@ public class MainViewModel extends ViewModel {
      */
     public void discoverMoreGists() {
 
-        Call<List<Gist>> gists = mGitHubService.getPublicGists(mGistPagesLoaded+1);
+        Call<List<Gist>> gists = mGitHubService.getPublicGists(mGistPagesLoaded + 1);
         gists.enqueue(new Callback<List<Gist>>() {
             @Override
             public void onResponse(@NonNull Call<List<Gist>> call, @NonNull Response<List<Gist>> response) {
@@ -284,7 +285,7 @@ public class MainViewModel extends ViewModel {
      */
     public void loadMoreStarredGists() {
 
-        mGitHubService.getStarredGists(mStarredGistsPagesLoaded+1).enqueue(new Callback<List<Gist>>() {
+        mGitHubService.getStarredGists(mStarredGistsPagesLoaded + 1).enqueue(new Callback<List<Gist>>() {
             @Override
             public void onResponse(Call<List<Gist>> call, Response<List<Gist>> response) {
                 if (!response.isSuccessful()) {
@@ -342,7 +343,7 @@ public class MainViewModel extends ViewModel {
             return;
         }
 
-        mGitHubService.getYourGists(mYourGistsPagesLoaded+1).enqueue(new Callback<List<Gist>>() {
+        mGitHubService.getYourGists(mYourGistsPagesLoaded + 1).enqueue(new Callback<List<Gist>>() {
             @Override
             public void onResponse(Call<List<Gist>> call, Response<List<Gist>> response) {
                 if (!response.isSuccessful()) {
@@ -395,6 +396,7 @@ public class MainViewModel extends ViewModel {
 
     /**
      * Set or clear the interface listening to calls to save credentials
+     *
      * @param mListener the interface listening or NULL to clear it
      */
     public void setListener(IMainViewModelListener mListener) {
@@ -403,8 +405,8 @@ public class MainViewModel extends ViewModel {
 
     /**
      * Check the HTTP code returned from a Retrofit Call to display the right error message to the user
-     * @param response the Retrofit Response to process
      *
+     * @param response the Retrofit Response to process
      * @see Response
      */
     private void onResponseError(Response response) {
@@ -414,15 +416,13 @@ public class MainViewModel extends ViewModel {
             // Possible problem with JSON body
             showError(response.message());
 
-        }
-        else if (response.code() == 401) {
+        } else if (response.code() == 401) {
             //HTTP 401 unauthorized
             // Login failed
             //  or
             // Need login first
             showError(response.message());
-        }
-        else if (response.code() == 403) {
+        } else if (response.code() == 403) {
             //HTTP 403 forbidden
             // Rate limit exceeded
             Headers headers = response.headers();
@@ -430,7 +430,7 @@ public class MainViewModel extends ViewModel {
             int rateLimit = 0;
             long rateLimitReset = 0;
             //int rateLimitRemaining = 0;
-            for (String headerName: headerNames) {
+            for (String headerName : headerNames) {
                 String headerValue = headers.get(headerName);
                 if (headerValue == null) {
                     continue;
@@ -454,19 +454,18 @@ public class MainViewModel extends ViewModel {
                 String errorMessage = Constants.RATELIMIT_ERROR + resetTime;
                 showError(errorMessage);
             }
-        }
-        else if (response.code() == 422) {
+        } else if (response.code() == 422) {
             //HTTP 422 un-processable Entity
             // Invalid field
             showError(response.message());
-        }
-        else {
+        } else {
             showError(response.message());
         }
     }
 
     /**
      * Check a link header returned in a call to the GitHub API to see if there is a URL pointing to the next page of content
+     *
      * @param linkHeader the Link header returned by the call to the GitHub API
      * @return TRUE is a next link was found, FALSE if not
      */
@@ -482,6 +481,7 @@ public class MainViewModel extends ViewModel {
 
     /**
      * Convenience method for showing an error to the user
+     *
      * @param message the message to show to the user
      */
     private void showError(String message) {
@@ -509,11 +509,11 @@ public class MainViewModel extends ViewModel {
 
     /**
      * Trim and save credentials so that the login persists after the app closes
-     *
+     * <p>
      * This assumes that there is an IMainViewModelListener configured
      *
      * @param username the username to save
-     * @param token the private access token to save
+     * @param token    the private access token to save
      */
     private void saveCredentials(String username, String token) {
         mIsLoggedIn = true;
@@ -529,8 +529,9 @@ public class MainViewModel extends ViewModel {
 
         /**
          * Called when credentials need to be saved to Shared Preferences
+         *
          * @param username the username to save
-         * @param token the private access token to save
+         * @param token    the private access token to save
          */
         void saveCredentials(String username, String token);
     }
