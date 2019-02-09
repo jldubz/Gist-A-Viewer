@@ -495,7 +495,14 @@ public class GistViewModel extends ViewModel {
                         //grab the page number for the "last" link
                         int lastPageNumberIndex = linkHeader.lastIndexOf("page=");
                         String lastPageNum = linkHeader.substring(lastPageNumberIndex+5, linkHeader.indexOf(">", lastPageNumberIndex));
-                        mGistCommentPrevPage = Integer.parseInt(lastPageNum);
+                        try {
+                            mGistCommentPrevPage = Integer.parseInt(lastPageNum);
+                        }
+                        catch (NumberFormatException exception) {
+                            showError("Couldn't load comments.  Please try again.");
+                            mGistCommentPrevPage = 0;
+                        }
+
                     }
                     else {
                         mGistCommentPrevPage = 0;
