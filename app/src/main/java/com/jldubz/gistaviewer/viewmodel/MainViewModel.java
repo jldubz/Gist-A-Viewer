@@ -95,15 +95,10 @@ public class MainViewModel extends ViewModel {
      */
     private void initAnonService() {
 
-        //Create a Gson instance with the right date format
-        Gson gson = new GsonBuilder()
-                .setDateFormat(R.string.date_format)
-                .create();
-
         //Create an instance of the GitHub service interface using Retrofit
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(Constants.URL_GITHUB)
-                .addConverterFactory(GsonConverterFactory.create(gson))
+                .addConverterFactory(GsonConverterFactory.create())
                 .build();
         mGitHubService = retrofit.create(IGitHubService.class);
     }
@@ -151,13 +146,9 @@ public class MainViewModel extends ViewModel {
                 .addInterceptor(new BasicAuthInterceptor(username.trim(), token.trim()))
                 .build();
 
-        Gson gson = new GsonBuilder()
-                .setDateFormat(R.string.date_format)
-                .create();
-
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(Constants.URL_GITHUB)
-                .addConverterFactory(GsonConverterFactory.create(gson))
+                .addConverterFactory(GsonConverterFactory.create())
                 .client(client)
                 .build();
         mGitHubService = retrofit.create(IGitHubService.class);

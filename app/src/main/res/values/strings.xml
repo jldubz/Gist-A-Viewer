@@ -46,7 +46,6 @@
 
     <string name="dialog_title_error">Error</string>
     <string name="dialog_button_ok">OK</string>
-    <string name="date_format">yyyy-MM-dd\'T\'HH:mm:ss.SSS</string>
     <string name="title_gist_menu_star">Star</string>
 
 </resources>
