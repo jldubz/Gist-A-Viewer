@@ -6,6 +6,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.jldubz.gistaviewer.R;
 import com.jldubz.gistaviewer.model.Constants;
+import com.jldubz.gistaviewer.model.NetworkUtil;
 import com.jldubz.gistaviewer.model.data.BasicAuthInterceptor;
 import com.jldubz.gistaviewer.model.gists.Gist;
 import com.jldubz.gistaviewer.model.GitHubUser;
@@ -157,7 +158,7 @@ public class MainViewModel extends ViewModel {
             @Override
             public void onResponse(@NonNull Call<GitHubUser> call, @NonNull Response<GitHubUser> response) {
                 if (!response.isSuccessful()) {
-                    onResponseError(response);
+                    showError(NetworkUtil.onGitHubResponseError(response));
                     showLoginForm();
                     return;
                 }
@@ -227,7 +228,7 @@ public class MainViewModel extends ViewModel {
             @Override
             public void onResponse(@NonNull Call<List<Gist>> call, @NonNull Response<List<Gist>> response) {
                 if (!response.isSuccessful()) {
-                    onResponseError(response);
+                    showError(NetworkUtil.onGitHubResponseError(response));
                     return;
                 }
 
@@ -280,7 +281,7 @@ public class MainViewModel extends ViewModel {
             @Override
             public void onResponse(Call<List<Gist>> call, Response<List<Gist>> response) {
                 if (!response.isSuccessful()) {
-                    onResponseError(response);
+                    showError(NetworkUtil.onGitHubResponseError(response));
                     return;
                 }
 
@@ -338,7 +339,7 @@ public class MainViewModel extends ViewModel {
             @Override
             public void onResponse(Call<List<Gist>> call, Response<List<Gist>> response) {
                 if (!response.isSuccessful()) {
-                    onResponseError(response);
+                    showError(NetworkUtil.onGitHubResponseError(response));
                     return;
                 }
 
@@ -392,66 +393,6 @@ public class MainViewModel extends ViewModel {
      */
     public void setListener(IMainViewModelListener mListener) {
         this.mListener = mListener;
-    }
-
-    /**
-     * Check the HTTP code returned from a Retrofit Call to display the right error message to the user
-     *
-     * @param response the Retrofit Response to process
-     * @see Response
-     */
-    private void onResponseError(Response response) {
-
-        if (response.code() == 400) {
-            //HTTP 400 bad request
-            // Possible problem with JSON body
-            showError(response.message());
-
-        } else if (response.code() == 401) {
-            //HTTP 401 unauthorized
-            // Login failed
-            //  or
-            // Need login first
-            showError(response.message());
-        } else if (response.code() == 403) {
-            //HTTP 403 forbidden
-            // Rate limit exceeded
-            Headers headers = response.headers();
-            Set<String> headerNames = headers.names();
-            int rateLimit = 0;
-            long rateLimitReset = 0;
-            //int rateLimitRemaining = 0;
-            for (String headerName : headerNames) {
-                String headerValue = headers.get(headerName);
-                if (headerValue == null) {
-                    continue;
-                }
-                switch (headerName) {
-                    case Constants.HEADER_RATELIMIT_LIMIT:
-                        rateLimit = Integer.valueOf(headerValue);
-                        break;
-                    /*case "X-RateLimit-Remaining":
-                        rateLimitRemaining = Integer.valueOf(headerValue);
-                        break;*/
-                    case Constants.HEADER_RATELIMIT_RESET:
-                        rateLimitReset = Long.valueOf(headerValue);
-                        break;
-                }
-            }
-
-            if (rateLimit != 0) {
-                Date resetDate = new Date(rateLimitReset * 1000);
-                String resetTime = DateFormat.getTimeInstance().format(resetDate);
-                String errorMessage = Constants.RATELIMIT_ERROR + resetTime;
-                showError(errorMessage);
-            }
-        } else if (response.code() == 422) {
-            //HTTP 422 un-processable Entity
-            // Invalid field
-            showError(response.message());
-        } else {
-            showError(response.message());
-        }
     }
 
     /**
