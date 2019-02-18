@@ -2,6 +2,9 @@ package com.jldubz.gistaviewer.model.gists;
 
 import com.google.gson.annotations.SerializedName;
 
+import androidx.annotation.Keep;
+
+@Keep
 public class GistFile {
     /*
     "files": {

@@ -6,6 +6,9 @@ import com.jldubz.gistaviewer.model.GitHubUser;
 import java.util.Date;
 import java.util.Map;
 
+import androidx.annotation.Keep;
+
+@Keep
 public class Gist {
 
     /*

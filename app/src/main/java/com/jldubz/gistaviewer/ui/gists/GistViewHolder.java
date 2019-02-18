@@ -11,6 +11,7 @@ import com.jldubz.gistaviewer.model.gists.Gist;
 
 import java.text.DateFormat;
 
+import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
