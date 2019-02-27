@@ -2,29 +2,21 @@ package com.jldubz.gistaviewer.viewmodel;
 
 import android.view.View;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.jldubz.gistaviewer.R;
 import com.jldubz.gistaviewer.model.Constants;
 import com.jldubz.gistaviewer.model.NetworkUtil;
 import com.jldubz.gistaviewer.model.data.BasicAuthInterceptor;
-import com.jldubz.gistaviewer.model.data.ZeroContentLengthInterceptor;
 import com.jldubz.gistaviewer.model.gists.Gist;
 import com.jldubz.gistaviewer.model.gists.GistComment;
 import com.jldubz.gistaviewer.model.data.IGitHubService;
 
-import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
-import java.util.Set;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
-import okhttp3.Headers;
 import okhttp3.OkHttpClient;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
@@ -267,22 +259,7 @@ public class GistViewModel extends ViewModel {
             return;
         }
 
-        //Build a client with an authorization and a zero content-length header
-        OkHttpClient client = new OkHttpClient.Builder()
-                .addInterceptor(new ZeroContentLengthInterceptor())
-                .addInterceptor(new BasicAuthInterceptor(mUsername, mToken))
-                .build();
-
-        //Create an instance of the GitHub service interface using Retrofit
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(Constants.URL_GITHUB)
-                .addConverterFactory(GsonConverterFactory.create())
-                .client(client)
-                .build();
-
-        IGitHubService gitHubService = retrofit.create(IGitHubService.class);
-
-        gitHubService.starGistById(mGistId).enqueue(new Callback<ResponseBody>() {
+        mGitHubService.starGistById(mGistId).enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> response) {
                 //HTTP 204 -> success, there is now a star
@@ -315,22 +292,7 @@ public class GistViewModel extends ViewModel {
             return;
         }
 
-        //Build a client with an authorization and a zero content-length header
-        OkHttpClient client = new OkHttpClient.Builder()
-                .addInterceptor(new ZeroContentLengthInterceptor())
-                .addInterceptor(new BasicAuthInterceptor(mUsername, mToken))
-                .build();
-
-        //Create an instance of the GitHub service interface using Retrofit
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(Constants.URL_GITHUB)
-                .addConverterFactory(GsonConverterFactory.create())
-                .client(client)
-                .build();
-
-        IGitHubService gitHubService = retrofit.create(IGitHubService.class);
-
-        gitHubService.unstarGistById(mGistId).enqueue(new Callback<ResponseBody>() {
+        mGitHubService.unstarGistById(mGistId).enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> response) {
                 //HTTP 204 -> success, there is no longer a star

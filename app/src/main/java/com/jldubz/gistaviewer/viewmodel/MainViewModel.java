@@ -2,9 +2,6 @@ package com.jldubz.gistaviewer.viewmodel;
 
 import android.view.View;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.jldubz.gistaviewer.R;
 import com.jldubz.gistaviewer.model.Constants;
 import com.jldubz.gistaviewer.model.NetworkUtil;
 import com.jldubz.gistaviewer.model.data.BasicAuthInterceptor;
@@ -12,17 +9,13 @@ import com.jldubz.gistaviewer.model.gists.Gist;
 import com.jldubz.gistaviewer.model.GitHubUser;
 import com.jldubz.gistaviewer.model.data.IGitHubService;
 
-import java.text.DateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Set;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
-import okhttp3.Headers;
 import okhttp3.OkHttpClient;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -235,8 +228,7 @@ public class MainViewModel extends ViewModel {
                 //increment the number of pages loaded
                 mGistPagesLoaded++;
                 //check to see if there is a "next" page
-                String linkHeader = response.headers().get("Link");
-                mMoreDiscoveredGistsAvailable = isNextLinkAvailable(linkHeader);
+                mMoreDiscoveredGistsAvailable = isNextLinkAvailable(response);
 
                 //update the list of discovered gists
                 List<Gist> currentList = mDiscoveredGists.getValue();
@@ -288,8 +280,7 @@ public class MainViewModel extends ViewModel {
                 //increment the number of pages loaded
                 mStarredGistsPagesLoaded++;
                 //check to see if there is a "next" page
-                String linkHeader = response.headers().get("Link");
-                mMoreStarredGistsAvailable = isNextLinkAvailable(linkHeader);
+                mMoreStarredGistsAvailable = isNextLinkAvailable(response);
                 //update the list of starred Gists
                 List<Gist> currentList = mStarredGists.getValue();
                 if (currentList == null) {
@@ -346,8 +337,7 @@ public class MainViewModel extends ViewModel {
                 //increment the number of pages loaded
                 mYourGistsPagesLoaded++;
                 //check to see if there is a "next" page
-                String linkHeader = response.headers().get("Link");
-                mMoreYourGistsAvailable = isNextLinkAvailable(linkHeader);
+                mMoreYourGistsAvailable = isNextLinkAvailable(response);
                 //update the list of your Gists
                 List<Gist> currentList = mYourGists.getValue();
                 if (currentList == null) {
@@ -398,10 +388,12 @@ public class MainViewModel extends ViewModel {
     /**
      * Check a link header returned in a call to the GitHub API to see if there is a URL pointing to the next page of content
      *
-     * @param linkHeader the Link header returned by the call to the GitHub API
+     * @param response the Retrofit Response to process
      * @return TRUE is a next link was found, FALSE if not
      */
-    private boolean isNextLinkAvailable(String linkHeader) {
+    private boolean isNextLinkAvailable(Response response) {
+
+        String linkHeader = response.headers().get("Link");
         if (linkHeader == null) {
             return false;
         }
