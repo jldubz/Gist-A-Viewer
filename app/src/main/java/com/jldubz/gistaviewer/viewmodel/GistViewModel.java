@@ -408,8 +408,12 @@ public class GistViewModel extends ViewModel {
                     return;
                 }
 
+                List<GistComment> currentList = mComments.getValue();
+                if (currentList == null) {
+                    currentList = new ArrayList<>();
+                }
                 //Add the comment to the top of the list
-                List<GistComment> comments = new ArrayList<>(mComments.getValue());
+                List<GistComment> comments = new ArrayList<>(currentList);
                 comments.add(0, response.body());
                 mComments.postValue(comments);
             }
