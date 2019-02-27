@@ -49,12 +49,6 @@ public class GistComment {
     private Date createdAt;
     // updated
 
-    public static GistComment fromString(String body) {
-        GistComment comment = new GistComment();
-        comment.setBody(body);
-        return comment;
-    }
-
     public GistComment() {
     }
 

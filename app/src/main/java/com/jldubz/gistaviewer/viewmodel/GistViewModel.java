@@ -397,7 +397,10 @@ public class GistViewModel extends ViewModel {
             return;
         }
 
-        mGitHubService.createCommentOnGist(mGistId, GistComment.fromString(comment)).enqueue(new Callback<GistComment>() {
+        GistComment newGistComment = new GistComment();
+        newGistComment.setBody(comment);
+
+        mGitHubService.createCommentOnGist(mGistId, newGistComment).enqueue(new Callback<GistComment>() {
             @Override
             public void onResponse(@NonNull Call<GistComment> call, @NonNull Response<GistComment> response) {
                 if (!response.isSuccessful()) {
