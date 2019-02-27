@@ -10,10 +10,10 @@ import okhttp3.Response;
 
 public class BasicAuthInterceptor implements Interceptor {
 
-    private String credentials;
+    private String mCredentials;
 
-    public BasicAuthInterceptor(String user, String token) {
-        this.credentials = Credentials.basic(user, token);
+    public BasicAuthInterceptor(String username, String token) {
+        this.mCredentials = Credentials.basic(username, token);
     }
 
     @NonNull
@@ -21,7 +21,7 @@ public class BasicAuthInterceptor implements Interceptor {
     public Response intercept(@NonNull Chain chain) throws IOException {
         Request request = chain.request();
         Request authenticatedRequest = request.newBuilder()
-                .header("Authorization", credentials).build();
+                .header("Authorization", mCredentials).build();
         return chain.proceed(authenticatedRequest);
     }
 }
