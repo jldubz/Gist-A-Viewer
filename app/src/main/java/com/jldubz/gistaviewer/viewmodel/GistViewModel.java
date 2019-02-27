@@ -496,6 +496,7 @@ public class GistViewModel extends ViewModel {
      */
     private void showError(String message) {
         mProgressBarVisibility.postValue(View.GONE);
+        mCommentsProgressBarVisibility.postValue(View.GONE);
         mErrorMessage.postValue(message);
     }
 }
